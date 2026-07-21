@@ -322,15 +322,14 @@ export const OperacionesView: React.FC = () => {
           </div>
 
           {/* Kanban Board Grid */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: columns.map(col => collapsedColumns[col.id] ? '60px' : '1fr').join(' '),
-            gap: '16px',
-            overflowX: 'auto',
-            paddingBottom: '16px',
-            minWidth: '900px',
-            transition: 'grid-template-columns 0.3s ease'
-          }}>
+          <div style={{ overflowX: 'auto', width: '100%', paddingBottom: '16px' }}>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: columns.map(col => collapsedColumns[col.id] ? '60px' : '1fr').join(' '),
+              gap: '16px',
+              minWidth: '900px',
+              transition: 'grid-template-columns 0.3s ease'
+            }}>
             {columns.map((col) => {
               const colProjects = filteredProjects.filter((p) => p.status === col.id);
               const isCollapsed = !!collapsedColumns[col.id];
@@ -512,12 +511,13 @@ export const OperacionesView: React.FC = () => {
                 </>
               )}
             </div>
-              );
-            })}
-          </div>
-        </>
-      ) : (
-        <>
+          );
+        })}
+      </div>
+    </div>
+  </>
+) : (
+  <>
           {/* Buscadores y Filtros Consultores */}
           <div className="view-header-actions">
             <div className="search-filters-bar" style={{ flex: 1 }}>

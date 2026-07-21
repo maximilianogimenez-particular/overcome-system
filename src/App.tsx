@@ -16,6 +16,7 @@ type TabId = 'dashboard' | 'comercial' | 'operaciones' | 'administracion' | 'con
 const PlatformLayout: React.FC = () => {
   const { activeRole, currentUser, setActiveRole } = useApp();
   const [activeTab, setActiveTab] = useState<TabId>('dashboard');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // Ajustar la vista si cambiamos a un rol que no tiene acceso a la vista actual
   useEffect(() => {
@@ -76,20 +77,26 @@ const PlatformLayout: React.FC = () => {
 
   return (
     <div className="app-container">
+      {/* Sidebar Overlay (Mobile only) */}
+      {isSidebarOpen && (
+        <div className="sidebar-overlay" onClick={() => setIsSidebarOpen(false)} />
+      )}
+
       {/* 1. SIDEBAR */}
-      <aside className="sidebar">
+      <aside className={`sidebar ${isSidebarOpen ? 'open' : ''}`}>
         <div className="sidebar-header">
           <img src="/logo.png" alt="Overcome Logo" className="sidebar-logo" />
           <div className="sidebar-brand">
             <span className="brand-name">Overcome</span>
             <span className="brand-subtitle">Consulting</span>
           </div>
+          <button className="sidebar-close-mobile" onClick={() => setIsSidebarOpen(false)}>✕</button>
         </div>
 
         <nav className="sidebar-menu">
           <span className="menu-section-title">General</span>
           <button
-            onClick={() => setActiveTab('dashboard')}
+            onClick={() => { setActiveTab('dashboard'); setIsSidebarOpen(false); }}
             className={`menu-item ${activeTab === 'dashboard' ? 'active' : ''}`}
           >
             📊 Dashboard
@@ -97,7 +104,7 @@ const PlatformLayout: React.FC = () => {
 
           {hasComercial && (
             <button
-              onClick={() => setActiveTab('comercial')}
+              onClick={() => { setActiveTab('comercial'); setIsSidebarOpen(false); }}
               className={`menu-item ${activeTab === 'comercial' ? 'active' : ''}`}
             >
               💼 Comercial
@@ -106,7 +113,7 @@ const PlatformLayout: React.FC = () => {
 
           {hasOperaciones && (
             <button
-              onClick={() => setActiveTab('operaciones')}
+              onClick={() => { setActiveTab('operaciones'); setIsSidebarOpen(false); }}
               className={`menu-item ${activeTab === 'operaciones' ? 'active' : ''}`}
             >
               ⚙️ Operaciones
@@ -115,7 +122,7 @@ const PlatformLayout: React.FC = () => {
 
           {hasAdministracion && (
             <button
-              onClick={() => setActiveTab('administracion')}
+              onClick={() => { setActiveTab('administracion'); setIsSidebarOpen(false); }}
               className={`menu-item ${activeTab === 'administracion' ? 'active' : ''}`}
             >
               💵 Administración
@@ -126,7 +133,7 @@ const PlatformLayout: React.FC = () => {
             <>
               <span className="menu-section-title">Administrador</span>
               <button
-                onClick={() => setActiveTab('configuracion')}
+                onClick={() => { setActiveTab('configuracion'); setIsSidebarOpen(false); }}
                 className={`menu-item ${activeTab === 'configuracion' ? 'active' : ''}`}
               >
                 ⚙️ Configuración
@@ -154,15 +161,24 @@ const PlatformLayout: React.FC = () => {
       <main className="main-area">
         {/* HEADER */}
         <header className="header">
-          <div className="header-title-area">
-            <h1 className="header-title">{getTabTitle()}</h1>
-            <span className="header-subtitle">{getTabSubtitle()}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flex: 1, minWidth: 0 }}>
+            <button
+              className="mobile-menu-toggle"
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              title="Menu"
+            >
+              ☰
+            </button>
+            <div className="header-title-area" style={{ minWidth: 0 }}>
+              <h1 className="header-title" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{getTabTitle()}</h1>
+              <span className="header-subtitle" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{getTabSubtitle()}</span>
+            </div>
           </div>
 
           <div className="header-actions">
             {/* Simulador de Rol (Para pruebas del cliente) */}
             <div className="simulator-panel">
-              <span className="simulator-label">Simular Rol:</span>
+              <span className="simulator-label">Simular:</span>
               <select
                 className="simulator-select"
                 value={activeRole}
@@ -171,7 +187,7 @@ const PlatformLayout: React.FC = () => {
                 <option value="superadmin">👑 Super Admin</option>
                 <option value="comercial">💼 Comercial</option>
                 <option value="operaciones">⚙️ Operaciones</option>
-                <option value="administracion">💵 Administración</option>
+                <option value="administracion">💵 Admin</option>
                 <option value="cliente">👤 Cliente</option>
               </select>
             </div>
