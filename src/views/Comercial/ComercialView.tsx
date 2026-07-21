@@ -22,7 +22,7 @@ export const ComercialView: React.FC = () => {
   const clientCompanyId = currentUser?.company_id;
 
   // Estados de la UI
-  const [activeSubTab, setActiveSubTab] = useState<'alta_cliente' | 'acuerdos' | 'satisfaccion'>('alta_cliente');
+  const [activeSubTab, setActiveSubTab] = useState<'alta_cliente' | 'acuerdos' | 'satisfaccion'>('acuerdos');
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [companyFilter, setCompanyFilter] = useState(isClient ? clientCompanyId || 'ALL' : 'ALL');
@@ -380,6 +380,19 @@ export const ComercialView: React.FC = () => {
 
         {/* Botones de sub-módulos */}
         <div style={{ display: 'flex', gap: '4px', background: 'var(--bg-card-dark)', padding: '4px', borderRadius: '8px', border: '1px solid var(--border-dark)' }}>
+          <button
+            onClick={() => { setActiveSubTab('acuerdos'); setSearchTerm(''); }}
+            className="btn-secondary"
+            style={{
+              padding: '8px 16px',
+              border: 'none',
+              borderRadius: '6px',
+              backgroundColor: activeSubTab === 'acuerdos' ? 'var(--primary-orange)' : 'transparent',
+              color: activeSubTab === 'acuerdos' ? 'white' : 'var(--text-light-secondary)',
+            }}
+          >
+            Cotizaciones
+          </button>
           {!isClient && (
             <button
               onClick={() => { setActiveSubTab('alta_cliente'); setSearchTerm(''); }}
@@ -396,19 +409,6 @@ export const ComercialView: React.FC = () => {
             </button>
           )}
           <button
-            onClick={() => { setActiveSubTab('acuerdos'); setSearchTerm(''); }}
-            className="btn-secondary"
-            style={{
-              padding: '8px 16px',
-              border: 'none',
-              borderRadius: '6px',
-              backgroundColor: activeSubTab === 'acuerdos' ? 'var(--primary-orange)' : 'transparent',
-              color: activeSubTab === 'acuerdos' ? 'white' : 'var(--text-light-secondary)',
-            }}
-          >
-            Cotizaciones
-          </button>
-          <button
             onClick={() => { setActiveSubTab('satisfaccion'); setSearchTerm(''); }}
             className="btn-secondary"
             style={{
@@ -419,7 +419,7 @@ export const ComercialView: React.FC = () => {
               color: activeSubTab === 'satisfaccion' ? 'white' : 'var(--text-light-secondary)',
             }}
           >
-            Satisfacción (NPS)
+            Satisfacción
           </button>
         </div>
       </div>
