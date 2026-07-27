@@ -1195,7 +1195,7 @@ export const ComercialView: React.FC = () => {
                 </div>
                 <div className="form-row">
                   <div className="form-group">
-                    <label>Fecha de Inicio *</label>
+                    <label>Fecha de Inicio del Contacto *</label>
                     <input
                       type="date"
                       value={newAgreement.start_date}
@@ -1360,7 +1360,7 @@ export const ComercialView: React.FC = () => {
                 </div>
                 <div className="form-row">
                   <div className="form-group">
-                    <label>Fecha de Inicio *</label>
+                    <label>Fecha de Inicio del Contacto *</label>
                     <input
                       type="date"
                       value={editingAgreement.start_date}
