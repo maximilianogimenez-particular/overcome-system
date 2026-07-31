@@ -109,6 +109,7 @@ CREATE TABLE IF NOT EXISTS purchases (
     purchase_date DATE NOT NULL,
     category VARCHAR(100) NOT NULL CHECK (category IN ('software_licenses', 'external_consulting', 'hardware', 'office_supplies', 'services', 'other')),
     status VARCHAR(50) DEFAULT 'approved' CHECK (status IN ('pending', 'approved', 'rejected')),
+    file_url TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -123,6 +124,7 @@ CREATE TABLE IF NOT EXISTS provider_payments (
     payment_method VARCHAR(50) NOT NULL CHECK (payment_method IN ('transfer', 'cash', 'check', 'other')),
     bank VARCHAR(50) CHECK (bank IN ('Galicia', 'Comafi', 'Santander', 'Uala')),
     status VARCHAR(50) DEFAULT 'paid' CHECK (status IN ('pending', 'paid')),
+    file_url TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 

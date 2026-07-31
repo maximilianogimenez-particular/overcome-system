@@ -126,6 +126,7 @@ export interface Purchase {
   status: 'pending' | 'approved' | 'rejected' | 'delivered' | 'paid';
   invoiceNumber?: string | null;
   responsible?: string | null;
+  file_url?: string | null;
   created_at: string;
 }
 
@@ -139,6 +140,7 @@ export interface ProviderPayment {
   payment_method: 'transfer' | 'cash' | 'check' | 'other';
   bank: 'Galicia' | 'Comafi' | 'Santander' | 'Uala' | null;
   status: 'pending' | 'paid';
+  file_url?: string | null;
   created_at: string;
 }
 

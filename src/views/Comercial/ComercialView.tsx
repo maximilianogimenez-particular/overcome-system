@@ -542,7 +542,7 @@ export const ComercialView: React.FC = () => {
                   <th>Cliente</th>
                   <th>Servicio / Proyecto</th>
                   <th>Meses</th>
-                  <th>Monto</th>
+                  <th style={{ minWidth: '200px' }}>Monto</th>
                   <th>Estado</th>
                   {!isClient && <th>Acciones con ABM</th>}
                 </tr>

@@ -85,6 +85,7 @@ export const AdministracionView: React.FC = () => {
     payment_date: new Date().toISOString().split('T')[0],
     payment_method: 'transfer' as const,
     bank: '' as const,
+    file_url: '',
   });
 
   // Estados de Formularios - Compras y Proveedores (New-ISO)
@@ -107,6 +108,7 @@ export const AdministracionView: React.FC = () => {
     status: 'pending' as 'pending' | 'approved' | 'delivered' | 'paid',
     approved: 'No' as 'Sí' | 'No',
     invoiceNumber: '',
+    file_url: '',
   });
 
   // Items de la orden de compra dinámica
@@ -357,6 +359,38 @@ export const AdministracionView: React.FC = () => {
     setEditingCollection(null);
   };
 
+  const handleFileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = (error) => reject(error);
+    });
+  };
+
+  const openAttachment = (dataUrl: string | null | undefined) => {
+    if (!dataUrl) return;
+    try {
+      const arr = dataUrl.split(',');
+      if (arr.length < 2) {
+        window.open(dataUrl, '_blank');
+        return;
+      }
+      const mime = arr[0].match(/:(.*?);/)?.[1] || '';
+      const bstr = atob(arr[1]);
+      let n = bstr.length;
+      const u8arr = new Uint8Array(n);
+      while (n--) {
+        u8arr[n] = bstr.charCodeAt(n);
+      }
+      const blob = new Blob([u8arr], { type: mime });
+      const url = URL.createObjectURL(blob);
+      window.open(url, '_blank');
+    } catch (e) {
+      window.open(dataUrl, '_blank');
+    }
+  };
+
   const handleCreatePayment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newPayment.provider_name || !newPayment.amount) return;
@@ -370,6 +404,7 @@ export const AdministracionView: React.FC = () => {
       payment_method: newPayment.payment_method,
       bank: newPayment.bank || null,
       status: 'paid',
+      file_url: newPayment.file_url || null,
     });
 
     if (newPayment.purchase_id) {
@@ -385,6 +420,7 @@ export const AdministracionView: React.FC = () => {
       payment_date: new Date().toISOString().split('T')[0],
       payment_method: 'transfer',
       bank: '',
+      file_url: '',
     });
   };
 
@@ -400,6 +436,7 @@ export const AdministracionView: React.FC = () => {
       payment_date: editingPayment.payment_date,
       payment_method: editingPayment.payment_method,
       bank: editingPayment.payment_method === 'transfer' ? (editingPayment.bank || null) : null,
+      file_url: editingPayment.file_url || null,
     });
     
     setEditingPayment(null);
@@ -488,6 +525,7 @@ export const AdministracionView: React.FC = () => {
       status: purchaseForm.status,
       approved: purchaseForm.approved,
       invoiceNumber: purchaseForm.invoiceNumber,
+      file_url: purchaseForm.file_url || null,
     };
 
     if (editingPurchase) {
@@ -506,6 +544,7 @@ export const AdministracionView: React.FC = () => {
       status: 'pending',
       approved: 'No',
       invoiceNumber: '',
+      file_url: '',
     });
     setPurchaseItems([{ description: '', quantity: 1, unitPrice: 0 }]);
   };
@@ -565,16 +604,18 @@ export const AdministracionView: React.FC = () => {
     });
 
   // 2. Cobranzas
-  const filteredCollections = collections.filter((c) => {
-    const invoice = invoices.find((inv) => inv.id === c.invoice_id);
-    if (!invoice) return false;
-    if (isClient && invoice.company_id !== clientCompanyId) return false;
-    if (!isClient && companyFilter !== 'ALL' && invoice.company_id !== companyFilter) return false;
+  const filteredCollections = collections
+    .filter((c) => {
+      const invoice = invoices.find((inv) => inv.id === c.invoice_id);
+      if (!invoice) return false;
+      if (isClient && invoice.company_id !== clientCompanyId) return false;
+      if (!isClient && companyFilter !== 'ALL' && invoice.company_id !== companyFilter) return false;
 
-    const company = companies.find((comp) => comp.id === invoice.company_id);
-    const searchString = `${invoice.invoice_number} ${company?.name || ''} ${c.bank || ''}`.toLowerCase();
-    return searchString.includes(searchTerm.toLowerCase());
-  });
+      const company = companies.find((comp) => comp.id === invoice.company_id);
+      const searchString = `${invoice.invoice_number} ${company?.name || ''} ${c.bank || ''}`.toLowerCase();
+      return searchString.includes(searchTerm.toLowerCase());
+    })
+    .sort((a, b) => (b.collection_date || '').localeCompare(a.collection_date || ''));
 
   // 3. Compras (Soportando la lógica del Sistema New-ISO)
   const filteredPurchases = isClient
@@ -620,10 +661,12 @@ export const AdministracionView: React.FC = () => {
   // 4. Pagos a Proveedores
   const filteredPayments = isClient
     ? []
-    : payments.filter((p) => {
-        const searchString = `${p.provider_name} ${p.payment_method}`.toLowerCase();
-        return searchString.includes(searchTerm.toLowerCase());
-      });
+    : payments
+        .filter((p) => {
+          const searchString = `${p.provider_name} ${p.payment_method}`.toLowerCase();
+          return searchString.includes(searchTerm.toLowerCase());
+        })
+        .sort((a, b) => (b.payment_date || '').localeCompare(a.payment_date || ''));
 
   // 5. Proveedores (Maestro)
   const filteredVendors = isClient
@@ -809,7 +852,7 @@ export const AdministracionView: React.FC = () => {
                   <th>Cliente</th>
                   <th>Descripción del servicio</th>
                   <th>Nro. Factura</th>
-                  <th style={{ minWidth: '200px' }}>Importe C/ IVA</th>
+                  <th style={{ minWidth: '240px' }}>Importe C/ IVA</th>
                   <th>Vencimiento</th>
                   <th>Estado</th>
                   {!isClient && <th>Acciones</th>}
@@ -1072,6 +1115,7 @@ export const AdministracionView: React.FC = () => {
                       status: 'pending',
                       approved: 'No',
                       invoiceNumber: '',
+                      file_url: '',
                     });
                     setPurchaseItems([{ description: '', quantity: 1, unitPrice: 0 }]);
                     setShowPurchaseModal(true);
@@ -1095,7 +1139,7 @@ export const AdministracionView: React.FC = () => {
                     <th>Proveedor</th>
                     <th>Proyecto / Destino</th>
                     <th>Detalle de Compra (Items)</th>
-                    <th>Importe C/ IVA</th>
+                    <th style={{ minWidth: '240px' }}>Importe C/ IVA</th>
                     <th style={{ textAlign: 'center' }}>Aprobado</th>
                     <th>Estado</th>
                     <th>Factura Nro.</th>
@@ -1164,6 +1208,16 @@ export const AdministracionView: React.FC = () => {
                               >
                                 Ver
                               </button>
+                              {p.file_url && (
+                                <button
+                                  className="btn-secondary"
+                                  style={{ padding: '4px 8px', fontSize: '0.75rem', borderColor: 'var(--accent-green)', color: 'var(--accent-green)' }}
+                                  onClick={() => openAttachment(p.file_url)}
+                                  title="Ver Comprobante Adjunto"
+                                >
+                                  📄 Adjunto
+                                </button>
+                              )}
                               {(activeRole === 'superadmin' || activeRole === 'administracion') && (
                                 <>
                                   <button
@@ -1179,6 +1233,7 @@ export const AdministracionView: React.FC = () => {
                                         status: p.status as any,
                                         approved: (p as any).approved || (isApproved ? 'Sí' : 'No'),
                                         invoiceNumber: p.invoiceNumber || '',
+                                        file_url: p.file_url || '',
                                       });
                                       setPurchaseItems(itemsArr);
                                       setShowPurchaseModal(true);
@@ -1351,11 +1406,22 @@ export const AdministracionView: React.FC = () => {
                                 ...p,
                                 amount: p.amount.toString(),
                                 bank: p.bank || '',
+                                file_url: p.file_url || '',
                               });
                             }}
                           >
                             Editar
                           </button>
+                          {p.file_url && (
+                            <button
+                              className="btn-secondary"
+                              style={{ padding: '4px 8px', fontSize: '0.75rem', borderColor: 'var(--accent-green)', color: 'var(--accent-green)' }}
+                              onClick={() => openAttachment(p.file_url)}
+                              title="Ver Comprobante Adjunto"
+                            >
+                              📄 Adjunto
+                            </button>
+                          )}
                           <button
                             className="btn-secondary"
                             style={{ padding: '4px 8px', fontSize: '0.75rem', borderColor: 'var(--accent-red)', color: 'var(--accent-red)' }}
@@ -1395,7 +1461,7 @@ export const AdministracionView: React.FC = () => {
                       <th>Nro. Factura</th>
                       <th>Cliente del Historial</th>
                       <th>Estado Enlace</th>
-                      <th>Importe C/ IVA</th>
+                      <th style={{ minWidth: '240px' }}>Importe C/ IVA</th>
                       <th>Emisión</th>
                     </tr>
                   </thead>
@@ -2126,6 +2192,38 @@ export const AdministracionView: React.FC = () => {
                     />
                   </div>
                 </div>
+
+                <div className="form-group" style={{ marginTop: '12px' }}>
+                  <label>Comprobante / Documento Compra (PDF, JPG)</label>
+                  <input
+                    type="file"
+                    accept=".pdf,.jpg,.jpeg"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        try {
+                          const base64 = await handleFileToBase64(file);
+                          setPurchaseForm({ ...purchaseForm, file_url: base64 });
+                        } catch (err) {
+                          console.error("Error reading file:", err);
+                        }
+                      }
+                    }}
+                  />
+                  {purchaseForm.file_url && (
+                    <div style={{ marginTop: '6px', fontSize: '0.85rem', color: 'var(--accent-green)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span>✅ Archivo cargado con éxito</span>
+                      <button 
+                        type="button" 
+                        className="btn-secondary" 
+                        style={{ padding: '2px 6px', fontSize: '0.7rem', borderColor: 'var(--accent-red)', color: 'var(--accent-red)' }}
+                        onClick={() => setPurchaseForm({ ...purchaseForm, file_url: '' })}
+                      >
+                        Eliminar
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
               <div className="modal-footer">
                 <button type="button" className="btn-secondary" onClick={() => setShowPurchaseModal(false)}>Cancelar</button>
@@ -2337,6 +2435,38 @@ export const AdministracionView: React.FC = () => {
                     </select>
                   </div>
                 )}
+
+                <div className="form-group" style={{ marginTop: '12px' }}>
+                  <label>Comprobante de Pago (PDF, JPG)</label>
+                  <input
+                    type="file"
+                    accept=".pdf,.jpg,.jpeg"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        try {
+                          const base64 = await handleFileToBase64(file);
+                          setNewPayment({ ...newPayment, file_url: base64 });
+                        } catch (err) {
+                          console.error("Error reading file:", err);
+                        }
+                      }
+                    }}
+                  />
+                  {newPayment.file_url && (
+                    <div style={{ marginTop: '6px', fontSize: '0.85rem', color: 'var(--accent-green)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span>✅ Archivo cargado con éxito</span>
+                      <button 
+                        type="button" 
+                        className="btn-secondary" 
+                        style={{ padding: '2px 6px', fontSize: '0.7rem', borderColor: 'var(--accent-red)', color: 'var(--accent-red)' }}
+                        onClick={() => setNewPayment({ ...newPayment, file_url: '' })}
+                      >
+                        Eliminar
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
               <div className="modal-footer">
                 <button type="button" className="btn-secondary" onClick={() => setShowPaymentModal(false)}>Cancelar</button>
@@ -2459,6 +2589,38 @@ export const AdministracionView: React.FC = () => {
                     </select>
                   </div>
                 )}
+
+                <div className="form-group" style={{ marginTop: '12px' }}>
+                  <label>Comprobante de Pago (PDF, JPG)</label>
+                  <input
+                    type="file"
+                    accept=".pdf,.jpg,.jpeg"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        try {
+                          const base64 = await handleFileToBase64(file);
+                          setEditingPayment({ ...editingPayment, file_url: base64 });
+                        } catch (err) {
+                          console.error("Error reading file:", err);
+                        }
+                      }
+                    }}
+                  />
+                  {editingPayment.file_url && (
+                    <div style={{ marginTop: '6px', fontSize: '0.85rem', color: 'var(--accent-green)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span>✅ Archivo cargado con éxito</span>
+                      <button 
+                        type="button" 
+                        className="btn-secondary" 
+                        style={{ padding: '2px 6px', fontSize: '0.7rem', borderColor: 'var(--accent-red)', color: 'var(--accent-red)' }}
+                        onClick={() => setEditingPayment({ ...editingPayment, file_url: '' })}
+                      >
+                        Eliminar
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
               <div className="modal-footer">
                 <button type="button" className="btn-secondary" onClick={() => setEditingPayment(null)}>Cancelar</button>
