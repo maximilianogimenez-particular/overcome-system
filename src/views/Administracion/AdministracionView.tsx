@@ -48,6 +48,7 @@ export const AdministracionView: React.FC = () => {
   const [editingCollection, setEditingCollection] = useState<any>(null);
   const [editingInvoice, setEditingInvoice] = useState<any>(null);
   const [editingPayment, setEditingPayment] = useState<any>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Modales de Compras (New-ISO)
   const [showVendorModal, setShowVendorModal] = useState(false);
@@ -302,7 +303,9 @@ export const AdministracionView: React.FC = () => {
   const handleCreateInvoice = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newInvoice.company_id || !newInvoice.invoice_number || !newInvoice.amount) return;
+    if (isSaving) return;
     
+    setIsSaving(true);
     try {
       await createRecord('invoices', {
         company_id: newInvoice.company_id,
@@ -330,13 +333,17 @@ export const AdministracionView: React.FC = () => {
     } catch (err: any) {
       console.error("Error creating invoice:", err);
       alert("Error al generar la factura: " + (err.message || JSON.stringify(err)));
+    } finally {
+      setIsSaving(false);
     }
   };
 
   const handleUpdateInvoice = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingInvoice.company_id || !editingInvoice.invoice_number || !editingInvoice.amount) return;
+    if (isSaving) return;
     
+    setIsSaving(true);
     try {
       await updateRecord('invoices', editingInvoice.id, {
         company_id: editingInvoice.company_id,
@@ -352,13 +359,17 @@ export const AdministracionView: React.FC = () => {
     } catch (err: any) {
       console.error("Error updating invoice:", err);
       alert("Error al guardar cambios de la factura: " + (err.message || JSON.stringify(err)));
+    } finally {
+      setIsSaving(false);
     }
   };
 
   const handleCreateCollection = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newCollection.invoice_id || !newCollection.amount_collected) return;
+    if (isSaving) return;
     
+    setIsSaving(true);
     try {
       await createRecord('collections', {
         invoice_id: newCollection.invoice_id,
@@ -385,13 +396,17 @@ export const AdministracionView: React.FC = () => {
     } catch (err: any) {
       console.error("Error creating collection:", err);
       alert("Error al registrar el cobro: " + (err.message || JSON.stringify(err)));
+    } finally {
+      setIsSaving(false);
     }
   };
 
   const handleUpdateCollection = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingCollection.invoice_id || !editingCollection.amount_collected) return;
+    if (isSaving) return;
     
+    setIsSaving(true);
     try {
       await updateRecord('collections', editingCollection.id, {
         invoice_id: editingCollection.invoice_id,
@@ -406,6 +421,8 @@ export const AdministracionView: React.FC = () => {
     } catch (err: any) {
       console.error("Error updating collection:", err);
       alert("Error al guardar cambios del cobro: " + (err.message || JSON.stringify(err)));
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -444,7 +461,9 @@ export const AdministracionView: React.FC = () => {
   const handleCreatePayment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newPayment.provider_name || !newPayment.amount) return;
+    if (isSaving) return;
     
+    setIsSaving(true);
     try {
       await createRecord('provider_payments', {
         purchase_id: newPayment.purchase_id || null,
@@ -476,13 +495,17 @@ export const AdministracionView: React.FC = () => {
     } catch (err: any) {
       console.error("Error creating payment:", err);
       alert("Error al registrar el pago: " + (err.message || JSON.stringify(err)));
+    } finally {
+      setIsSaving(false);
     }
   };
 
   const handleUpdatePayment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingPayment.provider_name || !editingPayment.amount) return;
+    if (isSaving) return;
     
+    setIsSaving(true);
     try {
       await updateRecord('provider_payments', editingPayment.id, {
         purchase_id: editingPayment.purchase_id || null,
@@ -499,6 +522,8 @@ export const AdministracionView: React.FC = () => {
     } catch (err: any) {
       console.error("Error updating payment:", err);
       alert("Error al guardar cambios del pago: " + (err.message || JSON.stringify(err)));
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -563,7 +588,9 @@ export const AdministracionView: React.FC = () => {
       alert('Debe seleccionar un proveedor');
       return;
     }
+    if (isSaving) return;
 
+    setIsSaving(true);
     const selectedVendor = vendors.find(v => v.id === purchaseForm.vendor_id);
     const vendorName = selectedVendor ? selectedVendor.name : 'Proveedor';
     
@@ -611,6 +638,8 @@ export const AdministracionView: React.FC = () => {
     } catch (err: any) {
       console.error("Error saving purchase:", err);
       alert("Error al guardar la compra: " + (err.message || JSON.stringify(err)));
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -938,19 +967,7 @@ export const AdministracionView: React.FC = () => {
                         <td>{formatDate(inv.issue_date)}</td>
                         <td>{comp?.name || 'S/N'}</td>
                         <td>{inv.description || 'Servicios Profesionales'}</td>
-                        <td style={{ fontWeight: 600 }}>
-                          {inv.invoice_number}
-                          {inv.file_url && inv.file_url !== '#' && (
-                            <button
-                              type="button"
-                              onClick={() => openAttachment(inv.file_url)}
-                              style={{ background: 'none', border: 'none', padding: '0 4px', cursor: 'pointer', fontSize: '1rem', verticalAlign: 'middle' }}
-                              title="Ver PDF de la factura"
-                            >
-                              📄
-                            </button>
-                          )}
-                        </td>
+                        <td style={{ fontWeight: 600 }}>{inv.invoice_number}</td>
                         <td style={{ fontWeight: 600 }}>{formatCurrency(inv.amount)}</td>
                         <td>{formatDate(inv.due_date)}</td>
                         <td>
@@ -1759,8 +1776,10 @@ export const AdministracionView: React.FC = () => {
                 </div>
               </div>
               <div className="modal-footer">
-                <button type="button" className="btn-secondary" onClick={() => setShowInvoiceModal(false)}>Cancelar</button>
-                <button type="submit" className="btn-primary">Generar Factura</button>
+                <button type="button" className="btn-secondary" disabled={isSaving} onClick={() => setShowInvoiceModal(false)}>Cancelar</button>
+                <button type="submit" className="btn-primary" disabled={isSaving}>
+                  {isSaving ? 'Guardando...' : 'Generar Factura'}
+                </button>
               </div>
             </form>
           </div>
@@ -1924,8 +1943,10 @@ export const AdministracionView: React.FC = () => {
                 </div>
               </div>
               <div className="modal-footer">
-                <button type="button" className="btn-secondary" onClick={() => setEditingInvoice(null)}>Cancelar</button>
-                <button type="submit" className="btn-primary">Guardar Cambios</button>
+                <button type="button" className="btn-secondary" disabled={isSaving} onClick={() => setEditingInvoice(null)}>Cancelar</button>
+                <button type="submit" className="btn-primary" disabled={isSaving}>
+                  {isSaving ? 'Guardando...' : 'Guardar Cambios'}
+                </button>
               </div>
             </form>
           </div>
@@ -2049,8 +2070,10 @@ export const AdministracionView: React.FC = () => {
                 </div>
               </div>
               <div className="modal-footer">
-                <button type="button" className="btn-secondary" onClick={() => setShowCollectionModal(false)}>Cancelar</button>
-                <button type="submit" className="btn-primary">Registrar Cobro</button>
+                <button type="button" className="btn-secondary" disabled={isSaving} onClick={() => setShowCollectionModal(false)}>Cancelar</button>
+                <button type="submit" className="btn-primary" disabled={isSaving}>
+                  {isSaving ? 'Guardando...' : 'Registrar Cobro'}
+                </button>
               </div>
             </form>
           </div>
@@ -2172,8 +2195,10 @@ export const AdministracionView: React.FC = () => {
                 </div>
               </div>
               <div className="modal-footer">
-                <button type="button" className="btn-secondary" onClick={() => setEditingCollection(null)}>Cancelar</button>
-                <button type="submit" className="btn-primary">Guardar Cambios</button>
+                <button type="button" className="btn-secondary" disabled={isSaving} onClick={() => setEditingCollection(null)}>Cancelar</button>
+                <button type="submit" className="btn-primary" disabled={isSaving}>
+                  {isSaving ? 'Guardando...' : 'Guardar Cambios'}
+                </button>
               </div>
             </form>
           </div>
@@ -2452,8 +2477,10 @@ export const AdministracionView: React.FC = () => {
                 </div>
               </div>
               <div className="modal-footer">
-                <button type="button" className="btn-secondary" onClick={() => setShowPurchaseModal(false)}>Cancelar</button>
-                <button type="submit" className="btn-primary">Guardar Compra</button>
+                <button type="button" className="btn-secondary" disabled={isSaving} onClick={() => setShowPurchaseModal(false)}>Cancelar</button>
+                <button type="submit" className="btn-primary" disabled={isSaving}>
+                  {isSaving ? 'Guardando...' : 'Guardar Compra'}
+                </button>
               </div>
             </form>
           </div>
@@ -2695,8 +2722,10 @@ export const AdministracionView: React.FC = () => {
                 </div>
               </div>
               <div className="modal-footer">
-                <button type="button" className="btn-secondary" onClick={() => setShowPaymentModal(false)}>Cancelar</button>
-                <button type="submit" className="btn-primary">Registrar Pago</button>
+                <button type="button" className="btn-secondary" disabled={isSaving} onClick={() => setShowPaymentModal(false)}>Cancelar</button>
+                <button type="submit" className="btn-primary" disabled={isSaving}>
+                  {isSaving ? 'Guardando...' : 'Registrar Pago'}
+                </button>
               </div>
             </form>
           </div>
@@ -2849,8 +2878,10 @@ export const AdministracionView: React.FC = () => {
                 </div>
               </div>
               <div className="modal-footer">
-                <button type="button" className="btn-secondary" onClick={() => setEditingPayment(null)}>Cancelar</button>
-                <button type="submit" className="btn-primary">Guardar Cambios</button>
+                <button type="button" className="btn-secondary" disabled={isSaving} onClick={() => setEditingPayment(null)}>Cancelar</button>
+                <button type="submit" className="btn-primary" disabled={isSaving}>
+                  {isSaving ? 'Guardando...' : 'Guardar Cambios'}
+                </button>
               </div>
             </form>
           </div>
