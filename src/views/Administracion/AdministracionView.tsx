@@ -395,51 +395,61 @@ export const AdministracionView: React.FC = () => {
     e.preventDefault();
     if (!newPayment.provider_name || !newPayment.amount) return;
     
-    await createRecord('provider_payments', {
-      purchase_id: newPayment.purchase_id || null,
-      provider_name: newPayment.provider_name,
-      amount: parseFloat(newPayment.amount),
-      currency: newPayment.currency,
-      payment_date: newPayment.payment_date,
-      payment_method: newPayment.payment_method,
-      bank: newPayment.bank || null,
-      status: 'paid',
-      file_url: newPayment.file_url || null,
-    });
+    try {
+      await createRecord('provider_payments', {
+        purchase_id: newPayment.purchase_id || null,
+        provider_name: newPayment.provider_name,
+        amount: parseFloat(newPayment.amount),
+        currency: newPayment.currency,
+        payment_date: newPayment.payment_date,
+        payment_method: newPayment.payment_method,
+        bank: newPayment.bank || null,
+        status: 'paid',
+        file_url: newPayment.file_url || null,
+      });
 
-    if (newPayment.purchase_id) {
-      await updateRecord('purchases', newPayment.purchase_id, { status: 'paid' });
+      if (newPayment.purchase_id) {
+        await updateRecord('purchases', newPayment.purchase_id, { status: 'paid' });
+      }
+
+      setShowPaymentModal(false);
+      setNewPayment({
+        purchase_id: '',
+        provider_name: '',
+        amount: '',
+        currency: '$',
+        payment_date: new Date().toISOString().split('T')[0],
+        payment_method: 'transfer',
+        bank: '',
+        file_url: '',
+      });
+    } catch (err: any) {
+      console.error("Error creating payment:", err);
+      alert("Error al registrar el pago: " + (err.message || JSON.stringify(err)));
     }
-
-    setShowPaymentModal(false);
-    setNewPayment({
-      purchase_id: '',
-      provider_name: '',
-      amount: '',
-      currency: '$',
-      payment_date: new Date().toISOString().split('T')[0],
-      payment_method: 'transfer',
-      bank: '',
-      file_url: '',
-    });
   };
 
   const handleUpdatePayment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingPayment.provider_name || !editingPayment.amount) return;
     
-    await updateRecord('provider_payments', editingPayment.id, {
-      purchase_id: editingPayment.purchase_id || null,
-      provider_name: editingPayment.provider_name,
-      amount: parseFloat(editingPayment.amount),
-      currency: editingPayment.currency,
-      payment_date: editingPayment.payment_date,
-      payment_method: editingPayment.payment_method,
-      bank: editingPayment.payment_method === 'transfer' ? (editingPayment.bank || null) : null,
-      file_url: editingPayment.file_url || null,
-    });
-    
-    setEditingPayment(null);
+    try {
+      await updateRecord('provider_payments', editingPayment.id, {
+        purchase_id: editingPayment.purchase_id || null,
+        provider_name: editingPayment.provider_name,
+        amount: parseFloat(editingPayment.amount),
+        currency: editingPayment.currency,
+        payment_date: editingPayment.payment_date,
+        payment_method: editingPayment.payment_method,
+        bank: editingPayment.payment_method === 'transfer' ? (editingPayment.bank || null) : null,
+        file_url: editingPayment.file_url || null,
+      });
+      
+      setEditingPayment(null);
+    } catch (err: any) {
+      console.error("Error updating payment:", err);
+      alert("Error al guardar cambios del pago: " + (err.message || JSON.stringify(err)));
+    }
   };
 
   const handleDeleteItem = async (table: any, id: string) => {
@@ -528,25 +538,30 @@ export const AdministracionView: React.FC = () => {
       file_url: purchaseForm.file_url || null,
     };
 
-    if (editingPurchase) {
-      await updateRecord('purchases', editingPurchase.id, recordData);
-      setEditingPurchase(null);
-    } else {
-      await createRecord('purchases', recordData);
-    }
+    try {
+      if (editingPurchase) {
+        await updateRecord('purchases', editingPurchase.id, recordData);
+        setEditingPurchase(null);
+      } else {
+        await createRecord('purchases', recordData);
+      }
 
-    setShowPurchaseModal(false);
-    setPurchaseForm({
-      date: new Date().toISOString().split('T')[0],
-      vendor_id: '',
-      projectName: '',
-      responsible: '',
-      status: 'pending',
-      approved: 'No',
-      invoiceNumber: '',
-      file_url: '',
-    });
-    setPurchaseItems([{ description: '', quantity: 1, unitPrice: 0 }]);
+      setShowPurchaseModal(false);
+      setPurchaseForm({
+        date: new Date().toISOString().split('T')[0],
+        vendor_id: '',
+        projectName: '',
+        responsible: '',
+        status: 'pending',
+        approved: 'No',
+        invoiceNumber: '',
+        file_url: '',
+      });
+      setPurchaseItems([{ description: '', quantity: 1, unitPrice: 0 }]);
+    } catch (err: any) {
+      console.error("Error saving purchase:", err);
+      alert("Error al guardar la compra: " + (err.message || JSON.stringify(err)));
+    }
   };
 
   // --- Helper to calculate 15 days from issue date ---
