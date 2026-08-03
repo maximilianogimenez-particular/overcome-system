@@ -67,6 +67,7 @@ export const AdministracionView: React.FC = () => {
     issue_date: new Date().toISOString().split('T')[0],
     due_date: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     status: 'sent' as const,
+    file_url: '',
   });
 
   const [newCollection, setNewCollection] = useState({
@@ -261,15 +262,31 @@ export const AdministracionView: React.FC = () => {
         }
       }
 
-      setNewInvoice({
-        company_id: detectedCompanyId,
-        invoice_number: `FAC-0004-${Math.floor(100000 + Math.random() * 900000)}`,
-        amount: detectedAmount,
-        currency: '$',
-        description: `Importación de Servicios - PDF ${filename.split('.')[0]}`,
-        issue_date: initialIssueDate,
-        due_date: calculateDueDate(initialIssueDate),
-        status: 'sent',
+      handleFileToBase64(file).then((base64) => {
+        setNewInvoice({
+          company_id: detectedCompanyId,
+          invoice_number: `FAC-0004-${Math.floor(100000 + Math.random() * 900000)}`,
+          amount: detectedAmount,
+          currency: '$',
+          description: `Importación de Servicios - PDF ${filename.split('.')[0]}`,
+          issue_date: initialIssueDate,
+          due_date: calculateDueDate(initialIssueDate),
+          status: 'sent',
+          file_url: base64,
+        });
+      }).catch((err) => {
+        console.error("Error converting PDF to base64:", err);
+        setNewInvoice({
+          company_id: detectedCompanyId,
+          invoice_number: `FAC-0004-${Math.floor(100000 + Math.random() * 900000)}`,
+          amount: detectedAmount,
+          currency: '$',
+          description: `Importación de Servicios - PDF ${filename.split('.')[0]}`,
+          issue_date: initialIssueDate,
+          due_date: calculateDueDate(initialIssueDate),
+          status: 'sent',
+          file_url: '',
+        });
       });
 
       setPdfAlertMessage(`✨ Datos leídos con éxito del PDF "${filename}" (Cliente y monto autodetectados).`);
@@ -285,38 +302,57 @@ export const AdministracionView: React.FC = () => {
   const handleCreateInvoice = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newInvoice.company_id || !newInvoice.invoice_number || !newInvoice.amount) return;
-    await createRecord('invoices', {
-      ...newInvoice,
-      amount: parseFloat(newInvoice.amount),
-      description: newInvoice.description || 'Servicios Profesionales',
-      file_url: '#',
-    });
-    setShowInvoiceModal(false);
-    setNewInvoice({
-      company_id: '',
-      invoice_number: '',
-      amount: '',
-      currency: '$',
-      description: '',
-      issue_date: initialIssueDate,
-      due_date: calculateDueDate(initialIssueDate),
-      status: 'sent',
-    });
+    
+    try {
+      await createRecord('invoices', {
+        company_id: newInvoice.company_id,
+        invoice_number: newInvoice.invoice_number,
+        amount: parseFloat(newInvoice.amount),
+        currency: newInvoice.currency,
+        description: newInvoice.description || 'Servicios Profesionales',
+        issue_date: newInvoice.issue_date,
+        due_date: newInvoice.due_date,
+        status: newInvoice.status,
+        file_url: newInvoice.file_url || '#',
+      });
+      setShowInvoiceModal(false);
+      setNewInvoice({
+        company_id: '',
+        invoice_number: '',
+        amount: '',
+        currency: '$',
+        description: '',
+        issue_date: initialIssueDate,
+        due_date: calculateDueDate(initialIssueDate),
+        status: 'sent',
+        file_url: '',
+      });
+    } catch (err: any) {
+      console.error("Error creating invoice:", err);
+      alert("Error al generar la factura: " + (err.message || JSON.stringify(err)));
+    }
   };
 
   const handleUpdateInvoice = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingInvoice.company_id || !editingInvoice.invoice_number || !editingInvoice.amount) return;
-    await updateRecord('invoices', editingInvoice.id, {
-      company_id: editingInvoice.company_id,
-      invoice_number: editingInvoice.invoice_number,
-      amount: parseFloat(editingInvoice.amount),
-      description: editingInvoice.description || 'Servicios Profesionales',
-      issue_date: editingInvoice.issue_date,
-      due_date: editingInvoice.due_date,
-      status: editingInvoice.status,
-    });
-    setEditingInvoice(null);
+    
+    try {
+      await updateRecord('invoices', editingInvoice.id, {
+        company_id: editingInvoice.company_id,
+        invoice_number: editingInvoice.invoice_number,
+        amount: parseFloat(editingInvoice.amount),
+        description: editingInvoice.description || 'Servicios Profesionales',
+        issue_date: editingInvoice.issue_date,
+        due_date: editingInvoice.due_date,
+        status: editingInvoice.status,
+        file_url: editingInvoice.file_url || null,
+      });
+      setEditingInvoice(null);
+    } catch (err: any) {
+      console.error("Error updating invoice:", err);
+      alert("Error al guardar cambios de la factura: " + (err.message || JSON.stringify(err)));
+    }
   };
 
   const handleCreateCollection = async (e: React.FormEvent) => {
@@ -902,7 +938,19 @@ export const AdministracionView: React.FC = () => {
                         <td>{formatDate(inv.issue_date)}</td>
                         <td>{comp?.name || 'S/N'}</td>
                         <td>{inv.description || 'Servicios Profesionales'}</td>
-                        <td style={{ fontWeight: 600 }}>{inv.invoice_number}</td>
+                        <td style={{ fontWeight: 600 }}>
+                          {inv.invoice_number}
+                          {inv.file_url && inv.file_url !== '#' && (
+                            <button
+                              type="button"
+                              onClick={() => openAttachment(inv.file_url)}
+                              style={{ background: 'none', border: 'none', padding: '0 4px', cursor: 'pointer', fontSize: '1rem', verticalAlign: 'middle' }}
+                              title="Ver PDF de la factura"
+                            >
+                              📄
+                            </button>
+                          )}
+                        </td>
                         <td style={{ fontWeight: 600 }}>{formatCurrency(inv.amount)}</td>
                         <td>{formatDate(inv.due_date)}</td>
                         <td>
@@ -923,6 +971,16 @@ export const AdministracionView: React.FC = () => {
                                   }}
                                 >
                                   Cobrar
+                                </button>
+                              )}
+                              {inv.file_url && inv.file_url !== '#' && (
+                                <button
+                                  className="btn-secondary"
+                                  style={{ padding: '4px 8px', fontSize: '0.75rem', borderColor: 'var(--accent-green)', color: 'var(--accent-green)' }}
+                                  onClick={() => openAttachment(inv.file_url)}
+                                  title="Ver Factura PDF"
+                                >
+                                  📄 PDF
                                 </button>
                               )}
                               <button
@@ -1667,6 +1725,38 @@ export const AdministracionView: React.FC = () => {
                     />
                   </div>
                 </div>
+
+                <div className="form-group" style={{ marginTop: '12px' }}>
+                  <label>Documento de Factura (PDF)</label>
+                  <input
+                    type="file"
+                    accept=".pdf"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        try {
+                          const base64 = await handleFileToBase64(file);
+                          setNewInvoice({ ...newInvoice, file_url: base64 });
+                        } catch (err) {
+                          console.error("Error reading file:", err);
+                        }
+                      }
+                    }}
+                  />
+                  {newInvoice.file_url && newInvoice.file_url !== '#' && (
+                    <div style={{ marginTop: '6px', fontSize: '0.85rem', color: 'var(--accent-green)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span>✅ PDF de factura cargado con éxito</span>
+                      <button 
+                        type="button" 
+                        className="btn-secondary" 
+                        style={{ padding: '2px 6px', fontSize: '0.7rem', borderColor: 'var(--accent-red)', color: 'var(--accent-red)' }}
+                        onClick={() => setNewInvoice({ ...newInvoice, file_url: '' })}
+                      >
+                        Eliminar
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
               <div className="modal-footer">
                 <button type="button" className="btn-secondary" onClick={() => setShowInvoiceModal(false)}>Cancelar</button>
@@ -1799,6 +1889,38 @@ export const AdministracionView: React.FC = () => {
                     <option value="overdue">Vencida</option>
                     <option value="draft">Borrador</option>
                   </select>
+                </div>
+
+                <div className="form-group" style={{ marginTop: '12px' }}>
+                  <label>Documento de Factura (PDF)</label>
+                  <input
+                    type="file"
+                    accept=".pdf"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        try {
+                          const base64 = await handleFileToBase64(file);
+                          setEditingInvoice({ ...editingInvoice, file_url: base64 });
+                        } catch (err) {
+                          console.error("Error reading file:", err);
+                        }
+                      }
+                    }}
+                  />
+                  {editingInvoice.file_url && editingInvoice.file_url !== '#' && (
+                    <div style={{ marginTop: '6px', fontSize: '0.85rem', color: 'var(--accent-green)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span>✅ PDF de factura cargado con éxito</span>
+                      <button 
+                        type="button" 
+                        className="btn-secondary" 
+                        style={{ padding: '2px 6px', fontSize: '0.7rem', borderColor: 'var(--accent-red)', color: 'var(--accent-red)' }}
+                        onClick={() => setEditingInvoice({ ...editingInvoice, file_url: '' })}
+                      >
+                        Eliminar
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="modal-footer">
