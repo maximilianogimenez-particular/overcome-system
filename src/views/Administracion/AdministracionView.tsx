@@ -680,6 +680,7 @@ export const AdministracionView: React.FC = () => {
   // --- FILTRADOS ---
 
   // 1. Facturas
+  // 1. Facturas
   const filteredInvoices = invoices
     .filter((i) => {
       if (isClient && i.company_id !== clientCompanyId) return false;
@@ -687,14 +688,14 @@ export const AdministracionView: React.FC = () => {
       if (statusFilter !== 'ALL' && i.status !== statusFilter) return false;
       
       const company = companies.find((c) => c.id === i.company_id);
-      const searchString = `${i.invoice_number} ${company?.name || ''} ${i.description || ''}`.toLowerCase();
+      const searchString = `${i.invoice_number || ''} ${company?.name || ''} ${i.description || ''}`.toLowerCase();
       return searchString.includes(searchTerm.toLowerCase());
     })
     .sort((a, b) => {
       if (a.issue_date !== b.issue_date) {
         return b.issue_date.localeCompare(a.issue_date);
       }
-      return a.invoice_number.localeCompare(b.invoice_number);
+      return (a.invoice_number || '').localeCompare(b.invoice_number || '');
     });
 
   // 2. Cobranzas
@@ -706,7 +707,7 @@ export const AdministracionView: React.FC = () => {
       if (!isClient && companyFilter !== 'ALL' && invoice.company_id !== companyFilter) return false;
 
       const company = companies.find((comp) => comp.id === invoice.company_id);
-      const searchString = `${invoice.invoice_number} ${company?.name || ''} ${c.bank || ''}`.toLowerCase();
+      const searchString = `${invoice.invoice_number || ''} ${company?.name || ''} ${c.bank || ''}`.toLowerCase();
       return searchString.includes(searchTerm.toLowerCase());
     })
     .sort((a, b) => (b.collection_date || '').localeCompare(a.collection_date || ''));
@@ -719,12 +720,12 @@ export const AdministracionView: React.FC = () => {
         if (searchTerm) {
           const q = searchTerm.toLowerCase();
           const vendor = vendors.find(v => v.id === p.vendor_id);
-          const vendorName = vendor ? vendor.name.toLowerCase() : p.provider_name.toLowerCase();
+          const vendorName = (vendor ? vendor.name : p.provider_name || '').toLowerCase();
           const project = (p.projectName || '').toLowerCase();
           const itemsText = (() => {
             try {
               const arr = JSON.parse(p.items_json || '[]');
-              return arr.map((item: any) => item.description.toLowerCase()).join(' ');
+              return arr.map((item: any) => (item.description || '').toLowerCase()).join(' ');
             } catch (e) {
               return (p.description || '').toLowerCase();
             }
@@ -757,7 +758,7 @@ export const AdministracionView: React.FC = () => {
     ? []
     : payments
         .filter((p) => {
-          const searchString = `${p.provider_name} ${p.payment_method}`.toLowerCase();
+          const searchString = `${p.provider_name || ''} ${p.payment_method || ''}`.toLowerCase();
           return searchString.includes(searchTerm.toLowerCase());
         })
         .sort((a, b) => (b.payment_date || '').localeCompare(a.payment_date || ''));
@@ -768,9 +769,9 @@ export const AdministracionView: React.FC = () => {
     : vendors.filter((v) => {
         if (searchTerm) {
           const q = searchTerm.toLowerCase();
-          const matches = v.name.toLowerCase().includes(q) || 
-                          v.cuit.includes(q) || 
-                          v.category.toLowerCase().includes(q) ||
+          const matches = (v.name || '').toLowerCase().includes(q) || 
+                          (v.cuit || '').toLowerCase().includes(q) || 
+                          (v.category || '').toLowerCase().includes(q) ||
                           (v.responsible || '').toLowerCase().includes(q);
           if (!matches) return false;
         }
