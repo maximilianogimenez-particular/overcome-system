@@ -75,6 +75,7 @@ export const AdministracionView: React.FC = () => {
     collection_date: new Date().toISOString().split('T')[0],
     payment_method: 'transfer' as const,
     bank: '' as const,
+    file_url: '',
   });
 
   const [newPayment, setNewPayment] = useState({
@@ -322,41 +323,54 @@ export const AdministracionView: React.FC = () => {
     e.preventDefault();
     if (!newCollection.invoice_id || !newCollection.amount_collected) return;
     
-    await createRecord('collections', {
-      invoice_id: newCollection.invoice_id,
-      amount_collected: parseFloat(newCollection.amount_collected),
-      collection_date: newCollection.collection_date,
-      payment_method: newCollection.payment_method,
-      bank: newCollection.bank || null,
-      reference_number: null,
-      status: 'completed',
-    });
+    try {
+      await createRecord('collections', {
+        invoice_id: newCollection.invoice_id,
+        amount_collected: parseFloat(newCollection.amount_collected),
+        collection_date: newCollection.collection_date,
+        payment_method: newCollection.payment_method,
+        bank: newCollection.bank || null,
+        reference_number: null,
+        status: 'completed',
+        file_url: newCollection.file_url || null,
+      });
 
-    await updateRecord('invoices', newCollection.invoice_id, { status: 'paid' });
+      await updateRecord('invoices', newCollection.invoice_id, { status: 'paid' });
 
-    setShowCollectionModal(false);
-    setNewCollection({
-      invoice_id: '',
-      amount_collected: '',
-      collection_date: new Date().toISOString().split('T')[0],
-      payment_method: 'transfer',
-      bank: '',
-    });
+      setShowCollectionModal(false);
+      setNewCollection({
+        invoice_id: '',
+        amount_collected: '',
+        collection_date: new Date().toISOString().split('T')[0],
+        payment_method: 'transfer',
+        bank: '',
+        file_url: '',
+      });
+    } catch (err: any) {
+      console.error("Error creating collection:", err);
+      alert("Error al registrar el cobro: " + (err.message || JSON.stringify(err)));
+    }
   };
 
   const handleUpdateCollection = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingCollection.invoice_id || !editingCollection.amount_collected) return;
     
-    await updateRecord('collections', editingCollection.id, {
-      invoice_id: editingCollection.invoice_id,
-      amount_collected: parseFloat(editingCollection.amount_collected),
-      collection_date: editingCollection.collection_date,
-      payment_method: editingCollection.payment_method,
-      bank: editingCollection.bank || null,
-    });
-    
-    setEditingCollection(null);
+    try {
+      await updateRecord('collections', editingCollection.id, {
+        invoice_id: editingCollection.invoice_id,
+        amount_collected: parseFloat(editingCollection.amount_collected),
+        collection_date: editingCollection.collection_date,
+        payment_method: editingCollection.payment_method,
+        bank: editingCollection.bank || null,
+        file_url: editingCollection.file_url || null,
+      });
+      
+      setEditingCollection(null);
+    } catch (err: any) {
+      console.error("Error updating collection:", err);
+      alert("Error al guardar cambios del cobro: " + (err.message || JSON.stringify(err)));
+    }
   };
 
   const handleFileToBase64 = (file: File): Promise<string> => {
@@ -1006,11 +1020,22 @@ export const AdministracionView: React.FC = () => {
                                 style={{ padding: '4px 8px', fontSize: '0.75rem' }}
                                 onClick={() => setEditingCollection({
                                   ...col,
-                                  amount_collected: col.amount_collected.toString()
+                                  amount_collected: col.amount_collected.toString(),
+                                  file_url: col.file_url || '',
                                 })}
                               >
                                 Editar
                               </button>
+                              {col.file_url && (
+                                <button
+                                  className="btn-secondary"
+                                  style={{ padding: '4px 8px', fontSize: '0.75rem', borderColor: 'var(--accent-green)', color: 'var(--accent-green)' }}
+                                  onClick={() => openAttachment(col.file_url)}
+                                  title="Ver Comprobante Adjunto"
+                                >
+                                  📄 Adjunto
+                                </button>
+                              )}
                               <button
                                 className="btn-secondary"
                                 style={{ padding: '4px 8px', fontSize: '0.75rem', borderColor: 'var(--accent-red)', color: 'var(--accent-red)' }}
@@ -1868,10 +1893,42 @@ export const AdministracionView: React.FC = () => {
                     <option value="Uala">Ualá</option>
                   </select>
                 </div>
+
+                <div className="form-group" style={{ marginTop: '12px' }}>
+                  <label>Comprobante de Transferencia (PDF, JPG)</label>
+                  <input
+                    type="file"
+                    accept=".pdf,.jpg,.jpeg"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        try {
+                          const base64 = await handleFileToBase64(file);
+                          setNewCollection({ ...newCollection, file_url: base64 });
+                        } catch (err) {
+                          console.error("Error reading file:", err);
+                        }
+                      }
+                    }}
+                  />
+                  {newCollection.file_url && (
+                    <div style={{ marginTop: '6px', fontSize: '0.85rem', color: 'var(--accent-green)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span>✅ Archivo cargado con éxito</span>
+                      <button 
+                        type="button" 
+                        className="btn-secondary" 
+                        style={{ padding: '2px 6px', fontSize: '0.7rem', borderColor: 'var(--accent-red)', color: 'var(--accent-red)' }}
+                        onClick={() => setNewCollection({ ...newCollection, file_url: '' })}
+                      >
+                        Eliminar
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
               <div className="modal-footer">
                 <button type="button" className="btn-secondary" onClick={() => setShowCollectionModal(false)}>Cancelar</button>
-                <button type="submit" className="btn-primary">Registrar Pago</button>
+                <button type="submit" className="btn-primary">Registrar Cobro</button>
               </div>
             </form>
           </div>
@@ -1958,6 +2015,38 @@ export const AdministracionView: React.FC = () => {
                     <option value="Santander">Santander</option>
                     <option value="Uala">Ualá</option>
                   </select>
+                </div>
+
+                <div className="form-group" style={{ marginTop: '12px' }}>
+                  <label>Comprobante de Transferencia (PDF, JPG)</label>
+                  <input
+                    type="file"
+                    accept=".pdf,.jpg,.jpeg"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        try {
+                          const base64 = await handleFileToBase64(file);
+                          setEditingCollection({ ...editingCollection, file_url: base64 });
+                        } catch (err) {
+                          console.error("Error reading file:", err);
+                        }
+                      }
+                    }}
+                  />
+                  {editingCollection.file_url && (
+                    <div style={{ marginTop: '6px', fontSize: '0.85rem', color: 'var(--accent-green)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span>✅ Archivo cargado con éxito</span>
+                      <button 
+                        type="button" 
+                        className="btn-secondary" 
+                        style={{ padding: '2px 6px', fontSize: '0.7rem', borderColor: 'var(--accent-red)', color: 'var(--accent-red)' }}
+                        onClick={() => setEditingCollection({ ...editingCollection, file_url: '' })}
+                      >
+                        Eliminar
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="modal-footer">

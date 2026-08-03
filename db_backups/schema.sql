@@ -96,6 +96,7 @@ CREATE TABLE IF NOT EXISTS collections (
     bank VARCHAR(50) CHECK (bank IN ('Galicia', 'Comafi', 'Santander', 'Uala')),
     reference_number VARCHAR(100),
     status VARCHAR(50) DEFAULT 'completed' CHECK (status IN ('pending', 'completed')),
+    file_url TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 

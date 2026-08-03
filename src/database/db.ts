@@ -91,6 +91,7 @@ export interface Collection {
   bank: 'Galicia' | 'Comafi' | 'Santander' | 'Uala' | null;
   reference_number: string | null;
   status: 'pending' | 'completed';
+  file_url?: string | null;
   created_at: string;
 }
 
