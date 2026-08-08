@@ -9,11 +9,13 @@ import { SearchFilter } from '../../components/SearchFilter';
 export const AdministracionView: React.FC = () => {
   const {
     companies,
+    projects,
     invoices,
     collections,
     purchases,
     payments,
     vendors,
+    projections,
     activeRole,
     currentUser,
     createRecord,
@@ -25,7 +27,7 @@ export const AdministracionView: React.FC = () => {
   const clientCompanyId = currentUser?.company_id;
 
   // Tabs de Administración
-  const [activeSubTab, setActiveSubTab] = useState<'facturacion' | 'cobranza' | 'compras' | 'pagos'>('facturacion');
+  const [activeSubTab, setActiveSubTab] = useState<'proyeccion' | 'facturacion' | 'cobranza' | 'compras' | 'pagos'>(isClient ? 'facturacion' : 'proyeccion');
   
   // Sub-tabs de Compras (copiado del módulo Relación con Proveedores del Sistema New-ISO)
   const [activePurchaseTab, setActivePurchaseTab] = useState<'compras' | 'evaluacion' | 'maestro'>('compras');
@@ -49,6 +51,18 @@ export const AdministracionView: React.FC = () => {
   const [editingInvoice, setEditingInvoice] = useState<any>(null);
   const [editingPayment, setEditingPayment] = useState<any>(null);
   const [isSaving, setIsSaving] = useState(false);
+
+  // Estados de Proyección
+  const [showProjectionModal, setShowProjectionModal] = useState(false);
+  const [editingProjection, setEditingProjection] = useState<any>(null);
+  const [yearFilter, setYearFilter] = useState(new Date().getFullYear());
+  const [newProjection, setNewProjection] = useState({
+    company_id: '',
+    project_id: '',
+    year: new Date().getFullYear(),
+    jan: '', feb: '', mar: '', apr: '', may: '', jun: '',
+    jul: '', aug: '', sep: '', oct: '', nov: '', dec: ''
+  });
 
   // Modales de Compras (New-ISO)
   const [showVendorModal, setShowVendorModal] = useState(false);
@@ -296,6 +310,112 @@ export const AdministracionView: React.FC = () => {
       
       e.target.value = '';
     }, 1500);
+  };
+
+  // --- PROYECCIÓN DE INGRESOS CRUD ---
+
+  const handleCreateProjection = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newProjection.company_id || !newProjection.project_id) {
+      alert('Debe seleccionar un cliente y un proyecto');
+      return;
+    }
+    if (isSaving) return;
+
+    // Verificar duplicado
+    const isDuplicate = (projections || []).some(
+      (p) => p.company_id === newProjection.company_id &&
+             p.project_id === newProjection.project_id &&
+             Number(p.year) === Number(newProjection.year)
+    );
+    if (isDuplicate) {
+      alert('Ya existe una proyección registrada para este cliente, proyecto y año.');
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      await createRecord('projections', {
+        company_id: newProjection.company_id,
+        project_id: newProjection.project_id,
+        year: Number(newProjection.year),
+        jan: parseFloat(newProjection.jan) || 0,
+        feb: parseFloat(newProjection.feb) || 0,
+        mar: parseFloat(newProjection.mar) || 0,
+        apr: parseFloat(newProjection.apr) || 0,
+        may: parseFloat(newProjection.may) || 0,
+        jun: parseFloat(newProjection.jun) || 0,
+        jul: parseFloat(newProjection.jul) || 0,
+        aug: parseFloat(newProjection.aug) || 0,
+        sep: parseFloat(newProjection.sep) || 0,
+        oct: parseFloat(newProjection.oct) || 0,
+        nov: parseFloat(newProjection.nov) || 0,
+        dec: parseFloat(newProjection.dec) || 0,
+      });
+
+      setShowProjectionModal(false);
+      setNewProjection({
+        company_id: '',
+        project_id: '',
+        year: yearFilter,
+        jan: '', feb: '', mar: '', apr: '', may: '', jun: '',
+        jul: '', aug: '', sep: '', oct: '', nov: '', dec: ''
+      });
+    } catch (err: any) {
+      console.error("Error creating projection:", err);
+      alert("Error al registrar la proyección: " + (err.message || JSON.stringify(err)));
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleUpdateProjection = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingProjection.company_id || !editingProjection.project_id) {
+      alert('Debe seleccionar un cliente y un proyecto');
+      return;
+    }
+    if (isSaving) return;
+
+    // Verificar duplicado (excluyendo el actual)
+    const isDuplicate = (projections || []).some(
+      (p) => p.company_id === editingProjection.company_id &&
+             p.project_id === editingProjection.project_id &&
+             Number(p.year) === Number(editingProjection.year) &&
+             p.id !== editingProjection.id
+    );
+    if (isDuplicate) {
+      alert('Ya existe otra proyección registrada para este cliente, proyecto y año.');
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      await updateRecord('projections', editingProjection.id, {
+        company_id: editingProjection.company_id,
+        project_id: editingProjection.project_id,
+        year: Number(editingProjection.year),
+        jan: parseFloat(editingProjection.jan) || 0,
+        feb: parseFloat(editingProjection.feb) || 0,
+        mar: parseFloat(editingProjection.mar) || 0,
+        apr: parseFloat(editingProjection.apr) || 0,
+        may: parseFloat(editingProjection.may) || 0,
+        jun: parseFloat(editingProjection.jun) || 0,
+        jul: parseFloat(editingProjection.jul) || 0,
+        aug: parseFloat(editingProjection.aug) || 0,
+        sep: parseFloat(editingProjection.sep) || 0,
+        oct: parseFloat(editingProjection.oct) || 0,
+        nov: parseFloat(editingProjection.nov) || 0,
+        dec: parseFloat(editingProjection.dec) || 0,
+      });
+
+      setEditingProjection(null);
+    } catch (err: any) {
+      console.error("Error updating projection:", err);
+      alert("Error al actualizar la proyección: " + (err.message || JSON.stringify(err)));
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   // --- REGISTRAR REGISTROS INDIVIDUALES ---
@@ -663,8 +783,8 @@ export const AdministracionView: React.FC = () => {
   };
 
   const formatCurrency = (amount: number) => {
-    if (isNaN(amount)) return '$ 0,00';
-    return `$ ${amount.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    if (isNaN(amount)) return '$ 0';
+    return `$ ${Math.round(amount).toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
   };
 
   const formatPaymentMethod = (method: string) => {
@@ -805,6 +925,22 @@ export const AdministracionView: React.FC = () => {
 
         {/* Sub-menú de Tabs */}
         <div style={{ display: 'flex', gap: '4px', background: 'var(--bg-card-dark)', padding: '4px', borderRadius: '8px', border: '1px solid var(--border-dark)' }}>
+          {!isClient && (
+            <button
+              onClick={() => { setActiveSubTab('proyeccion'); setSearchTerm(''); }}
+              className="btn-secondary"
+              style={{
+                padding: '8px 14px',
+                border: 'none',
+                borderRadius: '6px',
+                backgroundColor: activeSubTab === 'proyeccion' ? 'var(--primary-orange)' : 'transparent',
+                color: activeSubTab === 'proyeccion' ? 'white' : 'var(--text-light-secondary)',
+                fontSize: '0.85rem',
+              }}
+            >
+              Proyección
+            </button>
+          )}
           <button
             onClick={() => { setActiveSubTab('facturacion'); setSearchTerm(''); setStatusFilter('ALL'); }}
             className="btn-secondary"
@@ -868,6 +1004,233 @@ export const AdministracionView: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* --- 0. SUB-TAB: PROYECCIÓN --- */}
+      {activeSubTab === 'proyeccion' && !isClient && (
+        <div>
+          {/* Cabecera y botón de crear */}
+          <div className="view-header-actions" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', gap: '16px', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <label style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-light-secondary)' }}>Año Proyectado:</label>
+              <select
+                value={yearFilter}
+                onChange={(e) => setYearFilter(Number(e.target.value))}
+                style={{
+                  padding: '8px 12px',
+                  borderRadius: '6px',
+                  backgroundColor: 'var(--bg-panel-dark)',
+                  border: '1px solid var(--border-dark)',
+                  color: 'white',
+                  fontSize: '0.9rem',
+                  cursor: 'pointer',
+                }}
+              >
+                <option value={2025}>2025</option>
+                <option value={2026}>2026</option>
+                <option value={2027}>2027</option>
+                <option value={2028}>2028</option>
+                <option value={2029}>2029</option>
+              </select>
+            </div>
+            <button
+              className="btn-primary"
+              onClick={() => {
+                setNewProjection({
+                  company_id: '',
+                  project_id: '',
+                  year: yearFilter,
+                  jan: '', feb: '', mar: '', apr: '', may: '', jun: '',
+                  jul: '', aug: '', sep: '', oct: '', nov: '', dec: ''
+                });
+                setShowProjectionModal(true);
+              }}
+            >
+              + Nueva Proyección
+            </button>
+          </div>
+
+          {/* Tabla de Proyecciones */}
+          <div className="table-container" style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.73rem' }}>
+              <thead>
+                <tr>
+                  <th style={{ minWidth: '200px' }}>Cliente</th>
+                  <th style={{ minWidth: '200px' }}>Proyecto</th>
+                  <th style={{ minWidth: '115px', textAlign: 'right' }}>Ene</th>
+                  <th style={{ minWidth: '115px', textAlign: 'right' }}>Feb</th>
+                  <th style={{ minWidth: '115px', textAlign: 'right' }}>Mar</th>
+                  <th style={{ minWidth: '115px', textAlign: 'right' }}>Abr</th>
+                  <th style={{ minWidth: '115px', textAlign: 'right' }}>May</th>
+                  <th style={{ minWidth: '115px', textAlign: 'right' }}>Jun</th>
+                  <th style={{ minWidth: '115px', textAlign: 'right' }}>Jul</th>
+                  <th style={{ minWidth: '115px', textAlign: 'right' }}>Ago</th>
+                  <th style={{ minWidth: '115px', textAlign: 'right' }}>Sep</th>
+                  <th style={{ minWidth: '115px', textAlign: 'right' }}>Oct</th>
+                  <th style={{ minWidth: '115px', textAlign: 'right' }}>Nov</th>
+                  <th style={{ minWidth: '115px', textAlign: 'right' }}>Dic</th>
+                  <th style={{ minWidth: '130px', textAlign: 'right' }}>Total Fila</th>
+                  <th style={{ minWidth: '140px', textAlign: 'right' }}>Total Cliente</th>
+                  <th style={{ minWidth: '160px', textAlign: 'center' }}>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(() => {
+                  const currentYearProjections = (projections || []).filter(p => Number(p.year) === yearFilter);
+                  
+                  // Precalcular totales por cliente
+                  const totalsByClient: { [companyId: string]: number } = {};
+                  currentYearProjections.forEach(p => {
+                    const rowTotal = Number(p.jan || 0) + Number(p.feb || 0) + Number(p.mar || 0) + Number(p.apr || 0) + 
+                                     Number(p.may || 0) + Number(p.jun || 0) + Number(p.jul || 0) + Number(p.aug || 0) + 
+                                     Number(p.sep || 0) + Number(p.oct || 0) + Number(p.nov || 0) + Number(p.dec || 0);
+                    totalsByClient[p.company_id] = (totalsByClient[p.company_id] || 0) + rowTotal;
+                  });
+
+                  if (currentYearProjections.length === 0) {
+                    return (
+                      <tr>
+                        <td colSpan={17} style={{ textAlign: 'center', color: 'var(--text-light-muted)' }}>
+                          No hay proyecciones registradas para el año {yearFilter}.
+                        </td>
+                      </tr>
+                    );
+                  }
+
+                  return currentYearProjections.map((proj) => {
+                    const company = companies.find(c => c.id === proj.company_id);
+                    const project = projects.find((p: any) => p.id === proj.project_id);
+                    
+                    const rowTotal = Number(proj.jan || 0) + Number(proj.feb || 0) + Number(proj.mar || 0) + Number(proj.apr || 0) + 
+                                     Number(proj.may || 0) + Number(proj.jun || 0) + Number(proj.jul || 0) + Number(proj.aug || 0) + 
+                                     Number(proj.sep || 0) + Number(proj.oct || 0) + Number(proj.nov || 0) + Number(proj.dec || 0);
+                                     
+                    const clientTotal = totalsByClient[proj.company_id] || 0;
+
+                    return (
+                      <tr key={proj.id}>
+                        <td style={{ fontWeight: 600 }}>{company?.name || 'S/N'}</td>
+                        <td>{project?.name || 'S/N'}</td>
+                        <td style={{ textAlign: 'right' }}>{formatCurrency(proj.jan || 0)}</td>
+                        <td style={{ textAlign: 'right' }}>{formatCurrency(proj.feb || 0)}</td>
+                        <td style={{ textAlign: 'right' }}>{formatCurrency(proj.mar || 0)}</td>
+                        <td style={{ textAlign: 'right' }}>{formatCurrency(proj.apr || 0)}</td>
+                        <td style={{ textAlign: 'right' }}>{formatCurrency(proj.may || 0)}</td>
+                        <td style={{ textAlign: 'right' }}>{formatCurrency(proj.jun || 0)}</td>
+                        <td style={{ textAlign: 'right' }}>{formatCurrency(proj.jul || 0)}</td>
+                        <td style={{ textAlign: 'right' }}>{formatCurrency(proj.aug || 0)}</td>
+                        <td style={{ textAlign: 'right' }}>{formatCurrency(proj.sep || 0)}</td>
+                        <td style={{ textAlign: 'right' }}>{formatCurrency(proj.oct || 0)}</td>
+                        <td style={{ textAlign: 'right' }}>{formatCurrency(proj.nov || 0)}</td>
+                        <td style={{ textAlign: 'right' }}>{formatCurrency(proj.dec || 0)}</td>
+                        <td style={{ textAlign: 'right', fontWeight: 600, color: 'var(--accent-green)' }}>{formatCurrency(rowTotal)}</td>
+                        <td style={{ textAlign: 'right', fontWeight: 600, color: 'var(--accent-green)' }}>{formatCurrency(clientTotal)}</td>
+                        <td style={{ textAlign: 'center' }}>
+                          <div style={{ display: 'flex', gap: '6px', justifyContent: 'center' }}>
+                            <button
+                              className="btn-secondary"
+                              style={{ padding: '4px 8px', fontSize: '0.75rem' }}
+                              onClick={() => setEditingProjection({
+                                ...proj,
+                                jan: proj.jan.toString(),
+                                feb: proj.feb.toString(),
+                                mar: proj.mar.toString(),
+                                apr: proj.apr.toString(),
+                                may: proj.may.toString(),
+                                jun: proj.jun.toString(),
+                                jul: proj.jul.toString(),
+                                aug: proj.aug.toString(),
+                                sep: proj.sep.toString(),
+                                oct: proj.oct.toString(),
+                                nov: proj.nov.toString(),
+                                dec: proj.dec.toString()
+                              })}
+                            >
+                              Editar
+                            </button>
+                            <button
+                              className="btn-secondary"
+                              style={{ padding: '4px 8px', fontSize: '0.75rem', borderColor: 'var(--accent-red)', color: 'var(--accent-red)' }}
+                              onClick={() => handleDeleteItem('projections', proj.id)}
+                            >
+                              Eliminar
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  });
+                })()}
+              </tbody>
+              
+              {/* Totales y métricas del pie de página */}
+              <tfoot>
+                {(() => {
+                  const currentYearProjections = (projections || []).filter(p => Number(p.year) === yearFilter);
+                  if (currentYearProjections.length === 0) return null;
+
+                  const monthsKeys = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'] as const;
+
+                  const monthlyTotals = monthsKeys.map(month => 
+                    currentYearProjections.reduce((sum, p) => sum + Number(p[month] || 0), 0)
+                  );
+
+                  const monthlyProjectCounts = monthsKeys.map(month => 
+                    currentYearProjections.filter(p => Number(p[month] || 0) > 0).length
+                  );
+
+                  const monthlyAverages = monthsKeys.map((_, idx) => {
+                    const total = monthlyTotals[idx];
+                    const count = monthlyProjectCounts[idx];
+                    return count > 0 ? (total / count) : 0;
+                  });
+
+                  const grandTotal = monthlyTotals.reduce((sum, val) => sum + val, 0);
+
+                  return (
+                    <>
+                      {/* Fila 1: Sumatoria ($) */}
+                      <tr style={{ borderTop: '2px solid var(--border-dark)', backgroundColor: 'var(--bg-panel-dark)' }}>
+                        <td colSpan={2} style={{ fontWeight: 700, padding: '10px 8px' }}>Total Proyectado ($)</td>
+                        {monthlyTotals.map((tot, idx) => (
+                          <td key={idx} style={{ textAlign: 'right', fontWeight: 700, color: 'var(--accent-green)' }}>
+                            {formatCurrency(tot)}
+                          </td>
+                        ))}
+                        <td style={{ textAlign: 'right', fontWeight: 700, color: 'var(--accent-green)' }}>
+                          {formatCurrency(grandTotal)}
+                        </td>
+                        <td colSpan={2}></td>
+                      </tr>
+                      
+                      {/* Fila 2: Cantidad de Proyectos */}
+                      <tr style={{ backgroundColor: 'var(--bg-panel-dark)' }}>
+                        <td colSpan={2} style={{ fontWeight: 700, padding: '10px 8px' }}>Cant. Proyectos</td>
+                        {monthlyProjectCounts.map((count, idx) => (
+                          <td key={idx} style={{ textAlign: 'right', fontWeight: 600 }}>
+                            {count}
+                          </td>
+                        ))}
+                        <td colSpan={3}></td>
+                      </tr>
+
+                      {/* Fila 3: Ticket Promedio ($) */}
+                      <tr style={{ backgroundColor: 'var(--bg-panel-dark)' }}>
+                        <td colSpan={2} style={{ fontWeight: 700, padding: '10px 8px' }}>Ticket Promedio ($)</td>
+                        {monthlyAverages.map((avg, idx) => (
+                          <td key={idx} style={{ textAlign: 'right', fontWeight: 600, color: 'var(--primary-orange)' }}>
+                            {formatCurrency(avg)}
+                          </td>
+                        ))}
+                        <td colSpan={3}></td>
+                      </tr>
+                    </>
+                  );
+                })()}
+              </tfoot>
+            </table>
+          </div>
+        </div>
+      )}
 
       {/* --- 1. SUB-TAB: FACTURACIÓN --- */}
       {activeSubTab === 'facturacion' && (
@@ -2880,6 +3243,211 @@ export const AdministracionView: React.FC = () => {
               </div>
               <div className="modal-footer">
                 <button type="button" className="btn-secondary" disabled={isSaving} onClick={() => setEditingPayment(null)}>Cancelar</button>
+                <button type="submit" className="btn-primary" disabled={isSaving}>
+                  {isSaving ? 'Guardando...' : 'Guardar Cambios'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+
+      {/* Modal de Crear Proyección */}
+      {showProjectionModal && (
+        <div className="modal-overlay">
+          <div className="modal-content animate-fade-in" style={{ maxWidth: '600px' }}>
+            <div className="modal-header">
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 600 }}>Nueva Proyección Financiera</h3>
+              <button className="modal-close" onClick={() => setShowProjectionModal(false)}>×</button>
+            </div>
+            <form onSubmit={handleCreateProjection}>
+              <div className="modal-body">
+                <div className="form-group">
+                  <label>Cliente *</label>
+                  <select
+                    value={newProjection.company_id}
+                    onChange={(e) => setNewProjection({ ...newProjection, company_id: e.target.value, project_id: '' })}
+                    required
+                  >
+                    <option value="">Seleccione un cliente...</option>
+                    {[...companies].sort((a,b)=>a.name.localeCompare(b.name)).map((c) => (
+                      <option key={c.id} value={c.id}>{c.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label>Proyecto *</label>
+                  <select
+                    value={newProjection.project_id}
+                    onChange={(e) => setNewProjection({ ...newProjection, project_id: e.target.value })}
+                    required
+                    disabled={!newProjection.company_id}
+                  >
+                    <option value="">
+                      {!newProjection.company_id 
+                        ? 'Seleccione primero un cliente...' 
+                        : 'Seleccione un proyecto...'}
+                    </option>
+                    {projects
+                      .filter((p: any) => p.company_id === newProjection.company_id)
+                      .map((p: any) => (
+                        <option key={p.id} value={p.id}>{p.name}</option>
+                      ))}
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label>Año *</label>
+                  <select
+                    value={newProjection.year}
+                    onChange={(e) => setNewProjection({ ...newProjection, year: Number(e.target.value) })}
+                    required
+                  >
+                    <option value={2025}>2025</option>
+                    <option value={2026}>2026</option>
+                    <option value={2027}>2027</option>
+                    <option value={2028}>2028</option>
+                    <option value={2029}>2029</option>
+                  </select>
+                </div>
+
+                <label style={{ fontWeight: 600, fontSize: '0.9rem', marginTop: '16px', display: 'block' }}>
+                  Montos Proyectados por Mes ($)
+                </label>
+                
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))',
+                  gap: '12px',
+                  marginTop: '8px'
+                }}>
+                  {[
+                    { label: 'Enero', key: 'jan' }, { label: 'Febrero', key: 'feb' },
+                    { label: 'Marzo', key: 'mar' }, { label: 'Abril', key: 'apr' },
+                    { label: 'Mayo', key: 'may' }, { label: 'Junio', key: 'jun' },
+                    { label: 'Julio', key: 'jul' }, { label: 'Agosto', key: 'aug' },
+                    { label: 'Septiembre', key: 'sep' }, { label: 'Octubre', key: 'oct' },
+                    { label: 'Noviembre', key: 'nov' }, { label: 'Diciembre', key: 'dec' }
+                  ].map((m) => (
+                    <div className="form-group" key={m.key} style={{ marginBottom: 0 }}>
+                      <label style={{ fontSize: '0.8rem' }}>{m.label}</label>
+                      <input
+                        type="number"
+                        placeholder="0"
+                        step="0.01"
+                        value={(newProjection as any)[m.key]}
+                        onChange={(e) => setNewProjection({ ...newProjection, [m.key]: e.target.value })}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="modal-footer" style={{ marginTop: '20px' }}>
+                <button type="button" className="btn-secondary" disabled={isSaving} onClick={() => setShowProjectionModal(false)}>Cancelar</button>
+                <button type="submit" className="btn-primary" disabled={isSaving}>
+                  {isSaving ? 'Guardando...' : 'Crear Proyección'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Editar Proyección */}
+      {editingProjection && (
+        <div className="modal-overlay">
+          <div className="modal-content animate-fade-in" style={{ maxWidth: '600px' }}>
+            <div className="modal-header">
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 600 }}>Editar Proyección Financiera</h3>
+              <button className="modal-close" onClick={() => setEditingProjection(null)}>×</button>
+            </div>
+            <form onSubmit={handleUpdateProjection}>
+              <div className="modal-body">
+                <div className="form-group">
+                  <label>Cliente *</label>
+                  <select
+                    value={editingProjection.company_id}
+                    onChange={(e) => setEditingProjection({ ...editingProjection, company_id: e.target.value, project_id: '' })}
+                    required
+                  >
+                    <option value="">Seleccione un cliente...</option>
+                    {[...companies].sort((a,b)=>a.name.localeCompare(b.name)).map((c) => (
+                      <option key={c.id} value={c.id}>{c.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label>Proyecto *</label>
+                  <select
+                    value={editingProjection.project_id}
+                    onChange={(e) => setEditingProjection({ ...editingProjection, project_id: e.target.value })}
+                    required
+                    disabled={!editingProjection.company_id}
+                  >
+                    <option value="">
+                      {!editingProjection.company_id 
+                        ? 'Seleccione primero un cliente...' 
+                        : 'Seleccione un proyecto...'}
+                    </option>
+                    {projects
+                      .filter((p: any) => p.company_id === editingProjection.company_id)
+                      .map((p: any) => (
+                        <option key={p.id} value={p.id}>{p.name}</option>
+                      ))}
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label>Año *</label>
+                  <select
+                    value={editingProjection.year}
+                    onChange={(e) => setEditingProjection({ ...editingProjection, year: Number(e.target.value) })}
+                    required
+                  >
+                    <option value={2025}>2025</option>
+                    <option value={2026}>2026</option>
+                    <option value={2027}>2027</option>
+                    <option value={2028}>2028</option>
+                    <option value={2029}>2029</option>
+                  </select>
+                </div>
+
+                <label style={{ fontWeight: 600, fontSize: '0.9rem', marginTop: '16px', display: 'block' }}>
+                  Montos Proyectados por Mes ($)
+                </label>
+                
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))',
+                  gap: '12px',
+                  marginTop: '8px'
+                }}>
+                  {[
+                    { label: 'Enero', key: 'jan' }, { label: 'Febrero', key: 'feb' },
+                    { label: 'Marzo', key: 'mar' }, { label: 'Abril', key: 'apr' },
+                    { label: 'Mayo', key: 'may' }, { label: 'Junio', key: 'jun' },
+                    { label: 'Julio', key: 'jul' }, { label: 'Agosto', key: 'aug' },
+                    { label: 'Septiembre', key: 'sep' }, { label: 'Octubre', key: 'oct' },
+                    { label: 'Noviembre', key: 'nov' }, { label: 'Diciembre', key: 'dec' }
+                  ].map((m) => (
+                    <div className="form-group" key={m.key} style={{ marginBottom: 0 }}>
+                      <label style={{ fontSize: '0.8rem' }}>{m.label}</label>
+                      <input
+                        type="number"
+                        placeholder="0"
+                        step="0.01"
+                        value={(editingProjection as any)[m.key]}
+                        onChange={(e) => setEditingProjection({ ...editingProjection, [m.key]: e.target.value })}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="modal-footer" style={{ marginTop: '20px' }}>
+                <button type="button" className="btn-secondary" disabled={isSaving} onClick={() => setEditingProjection(null)}>Cancelar</button>
                 <button type="submit" className="btn-primary" disabled={isSaving}>
                   {isSaving ? 'Guardando...' : 'Guardar Cambios'}
                 </button>

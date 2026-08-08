@@ -145,6 +145,26 @@ export interface ProviderPayment {
   created_at: string;
 }
 
+export interface Projection {
+  id: string;
+  company_id: string;
+  project_id: string;
+  year: number;
+  jan: number;
+  feb: number;
+  mar: number;
+  apr: number;
+  may: number;
+  jun: number;
+  jul: number;
+  aug: number;
+  sep: number;
+  oct: number;
+  nov: number;
+  dec: number;
+  created_at: string;
+}
+
 // Estructura de la Base de Datos completa
 export interface DatabaseState {
   companies: Company[];
@@ -157,6 +177,7 @@ export interface DatabaseState {
   purchases: Purchase[];
   provider_payments: ProviderPayment[];
   vendors: Vendor[];
+  projections: Projection[];
 }
 
 const STORAGE_KEY = 'overcome_consulting_db';
@@ -193,6 +214,7 @@ export const initializeDB = (): DatabaseState => {
     purchases: initialSeedData.purchases as Purchase[],
     provider_payments: initialSeedData.provider_payments as ProviderPayment[],
     vendors: (initialSeedData as any).vendors || [],
+    projections: [],
   };
 
   localStorage.setItem(STORAGE_KEY, JSON.stringify(seedState));
@@ -232,7 +254,8 @@ export const getDB = async (): Promise<DatabaseState> => {
         'collections',
         'purchases',
         'provider_payments',
-        'vendors'
+        'vendors',
+        'projections'
       ];
       
       const promises = tables.map(table => supabase.from(table).select('*'));
@@ -290,7 +313,8 @@ export const restoreDB = async (newState: DatabaseState): Promise<boolean> => {
         'collections',
         'purchases',
         'provider_payments',
-        'vendors'
+        'vendors',
+        'projections'
       ];
       
       for (const table of tables) {

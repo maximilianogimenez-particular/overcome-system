@@ -156,3 +156,29 @@ CREATE INDEX IF NOT EXISTS idx_invoices_company_id ON invoices(company_id);
 CREATE INDEX IF NOT EXISTS idx_collections_invoice_id ON collections(invoice_id);
 CREATE INDEX IF NOT EXISTS idx_provider_payments_purchase_id ON provider_payments(purchase_id);
 CREATE INDEX IF NOT EXISTS idx_vendors_name ON vendors(name);
+
+-- 13. Administración: Proyecciones Financieras
+CREATE TABLE IF NOT EXISTS projections (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+    project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    year INTEGER NOT NULL,
+    jan NUMERIC(12, 2) DEFAULT 0,
+    feb NUMERIC(12, 2) DEFAULT 0,
+    mar NUMERIC(12, 2) DEFAULT 0,
+    apr NUMERIC(12, 2) DEFAULT 0,
+    may NUMERIC(12, 2) DEFAULT 0,
+    jun NUMERIC(12, 2) DEFAULT 0,
+    jul NUMERIC(12, 2) DEFAULT 0,
+    aug NUMERIC(12, 2) DEFAULT 0,
+    sep NUMERIC(12, 2) DEFAULT 0,
+    oct NUMERIC(12, 2) DEFAULT 0,
+    nov NUMERIC(12, 2) DEFAULT 0,
+    dec NUMERIC(12, 2) DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(company_id, project_id, year)
+);
+
+CREATE INDEX IF NOT EXISTS idx_projections_company_id ON projections(company_id);
+CREATE INDEX IF NOT EXISTS idx_projections_project_id ON projections(project_id);
+CREATE INDEX IF NOT EXISTS idx_projections_year ON projections(year);

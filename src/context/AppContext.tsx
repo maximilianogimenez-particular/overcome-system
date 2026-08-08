@@ -17,6 +17,7 @@ interface AppContextType {
   purchases: db.Purchase[];
   payments: db.ProviderPayment[];
   vendors: db.Vendor[];
+  projections: db.Projection[];
   loading: boolean;
 
   // Simulación de sesión de usuario
@@ -55,6 +56,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [purchases, setPurchases] = useState<db.Purchase[]>([]);
   const [payments, setPayments] = useState<db.ProviderPayment[]>([]);
   const [vendors, setVendors] = useState<db.Vendor[]>([]);
+  const [projections, setProjections] = useState<db.Projection[]>([]);
   
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUserInner] = useState<db.User | null>(null);
@@ -76,6 +78,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setPurchases(state.purchases);
       setPayments(state.provider_payments);
       setVendors(state.vendors || []);
+      setProjections(state.projections || []);
 
       // Si no hay un usuario simulado activo, asignar al Super Admin por defecto
       if (!currentUser && state.users.length > 0) {
@@ -171,6 +174,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         purchases,
         payments,
         vendors,
+        projections,
         loading,
         currentUser,
         setCurrentUser,
