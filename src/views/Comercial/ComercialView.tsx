@@ -379,7 +379,7 @@ export const ComercialView: React.FC = () => {
         </div>
 
         {/* Botones de sub-módulos */}
-        <div style={{ display: 'flex', gap: '4px', background: 'var(--bg-card-dark)', padding: '4px', borderRadius: '8px', border: '1px solid var(--border-dark)' }}>
+        <div style={{ display: 'flex', gap: '4px', background: 'var(--bg-card-dark)', padding: '4px', borderRadius: '8px', border: '1px solid var(--border-dark)', overflowX: 'auto', maxWidth: '100%', WebkitOverflowScrolling: 'touch' }} className="scrollbar-hidden">
           <button
             onClick={() => { setActiveSubTab('acuerdos'); setSearchTerm(''); }}
             className="btn-secondary"
@@ -389,6 +389,7 @@ export const ComercialView: React.FC = () => {
               borderRadius: '6px',
               backgroundColor: activeSubTab === 'acuerdos' ? 'var(--primary-orange)' : 'transparent',
               color: activeSubTab === 'acuerdos' ? 'white' : 'var(--text-light-secondary)',
+              flexShrink: 0,
             }}
           >
             Cotizaciones
@@ -403,6 +404,7 @@ export const ComercialView: React.FC = () => {
                 borderRadius: '6px',
                 backgroundColor: activeSubTab === 'alta_cliente' ? 'var(--primary-orange)' : 'transparent',
                 color: activeSubTab === 'alta_cliente' ? 'white' : 'var(--text-light-secondary)',
+                flexShrink: 0,
               }}
             >
               Alta Cliente
@@ -417,6 +419,7 @@ export const ComercialView: React.FC = () => {
               borderRadius: '6px',
               backgroundColor: activeSubTab === 'satisfaccion' ? 'var(--primary-orange)' : 'transparent',
               color: activeSubTab === 'satisfaccion' ? 'white' : 'var(--text-light-secondary)',
+              flexShrink: 0,
             }}
           >
             Satisfacción

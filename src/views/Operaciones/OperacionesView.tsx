@@ -248,7 +248,7 @@ export const OperacionesView: React.FC = () => {
 
         {/* Sub-menú de Tabs */}
         {!isClient && (
-          <div style={{ display: 'flex', gap: '4px', background: 'var(--bg-card-dark)', padding: '4px', borderRadius: '8px', border: '1px solid var(--border-dark)' }}>
+          <div style={{ display: 'flex', gap: '4px', background: 'var(--bg-card-dark)', padding: '4px', borderRadius: '8px', border: '1px solid var(--border-dark)', overflowX: 'auto', maxWidth: '100%', WebkitOverflowScrolling: 'touch' }} className="scrollbar-hidden">
             <button
               onClick={() => { setActiveTab('proyectos'); setSearchTerm(''); }}
               className="btn-secondary"
@@ -259,6 +259,7 @@ export const OperacionesView: React.FC = () => {
                 backgroundColor: activeTab === 'proyectos' ? 'var(--primary-orange)' : 'transparent',
                 color: activeTab === 'proyectos' ? 'white' : 'var(--text-light-secondary)',
                 fontSize: '0.85rem',
+                flexShrink: 0,
               }}
             >
               Tablero de Proyectos
@@ -273,9 +274,10 @@ export const OperacionesView: React.FC = () => {
                 backgroundColor: activeTab === 'consultores' ? 'var(--primary-orange)' : 'transparent',
                 color: activeTab === 'consultores' ? 'white' : 'var(--text-light-secondary)',
                 fontSize: '0.85rem',
+                flexShrink: 0,
               }}
             >
-              Maestro de Consultores
+              Lista de Consultores
             </button>
           </div>
         )}

@@ -924,7 +924,7 @@ export const AdministracionView: React.FC = () => {
         </div>
 
         {/* Sub-menú de Tabs */}
-        <div style={{ display: 'flex', gap: '4px', background: 'var(--bg-card-dark)', padding: '4px', borderRadius: '8px', border: '1px solid var(--border-dark)' }}>
+        <div style={{ display: 'flex', gap: '4px', background: 'var(--bg-card-dark)', padding: '4px', borderRadius: '8px', border: '1px solid var(--border-dark)', overflowX: 'auto', maxWidth: '100%', WebkitOverflowScrolling: 'touch' }} className="scrollbar-hidden">
           {!isClient && (
             <button
               onClick={() => { setActiveSubTab('proyeccion'); setSearchTerm(''); }}
@@ -936,6 +936,7 @@ export const AdministracionView: React.FC = () => {
                 backgroundColor: activeSubTab === 'proyeccion' ? 'var(--primary-orange)' : 'transparent',
                 color: activeSubTab === 'proyeccion' ? 'white' : 'var(--text-light-secondary)',
                 fontSize: '0.85rem',
+                flexShrink: 0,
               }}
             >
               Proyección
@@ -951,6 +952,7 @@ export const AdministracionView: React.FC = () => {
               backgroundColor: activeSubTab === 'facturacion' ? 'var(--primary-orange)' : 'transparent',
               color: activeSubTab === 'facturacion' ? 'white' : 'var(--text-light-secondary)',
               fontSize: '0.85rem',
+              flexShrink: 0,
             }}
           >
             Facturación
@@ -965,6 +967,7 @@ export const AdministracionView: React.FC = () => {
               backgroundColor: activeSubTab === 'cobranza' ? 'var(--primary-orange)' : 'transparent',
               color: activeSubTab === 'cobranza' ? 'white' : 'var(--text-light-secondary)',
               fontSize: '0.85rem',
+              flexShrink: 0,
             }}
           >
             Cobranza
@@ -982,6 +985,7 @@ export const AdministracionView: React.FC = () => {
                   backgroundColor: activeSubTab === 'compras' ? 'var(--primary-orange)' : 'transparent',
                   color: activeSubTab === 'compras' ? 'white' : 'var(--text-light-secondary)',
                   fontSize: '0.85rem',
+                  flexShrink: 0,
                 }}
               >
                 Compras y Contrataciones
@@ -996,6 +1000,7 @@ export const AdministracionView: React.FC = () => {
                   backgroundColor: activeSubTab === 'pagos' ? 'var(--primary-orange)' : 'transparent',
                   color: activeSubTab === 'pagos' ? 'white' : 'var(--text-light-secondary)',
                   fontSize: '0.85rem',
+                  flexShrink: 0,
                 }}
               >
                 Pago a Proveedores
@@ -1514,7 +1519,7 @@ export const AdministracionView: React.FC = () => {
       {activeSubTab === 'compras' && !isClient && (
         <div>
           {/* Sub-menú secundario del módulo de Compras (New-ISO) */}
-          <div style={{ display: 'flex', gap: '8px', background: 'rgba(255,255,255,0.02)', padding: '6px', borderRadius: '8px', border: '1px solid var(--border-dark)', marginBottom: '20px', width: 'fit-content' }}>
+          <div style={{ display: 'flex', gap: '8px', background: 'rgba(255,255,255,0.02)', padding: '6px', borderRadius: '8px', border: '1px solid var(--border-dark)', marginBottom: '20px', overflowX: 'auto', maxWidth: '100%', WebkitOverflowScrolling: 'touch' }} className="scrollbar-hidden">
             <button
               onClick={() => { setActivePurchaseTab('compras'); setSearchTerm(''); }}
               className="btn-secondary"
@@ -1525,6 +1530,7 @@ export const AdministracionView: React.FC = () => {
                 backgroundColor: activePurchaseTab === 'compras' ? 'var(--primary-orange)' : 'transparent',
                 color: activePurchaseTab === 'compras' ? 'white' : 'var(--text-light-secondary)',
                 fontSize: '0.8rem',
+                flexShrink: 0,
               }}
             >
               🛒 Compras y Contrataciones
@@ -1539,6 +1545,7 @@ export const AdministracionView: React.FC = () => {
                 backgroundColor: activePurchaseTab === 'maestro' ? 'var(--primary-orange)' : 'transparent',
                 color: activePurchaseTab === 'maestro' ? 'white' : 'var(--text-light-secondary)',
                 fontSize: '0.8rem',
+                flexShrink: 0,
               }}
             >
               🗂️ Maestro de Proveedores

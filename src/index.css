@@ -349,3 +349,12 @@ tfoot tr .sticky-col-2 {
   border-top: 1px solid var(--border-dark) !important;
   border-bottom: none !important;
 }
+
+/* Ocultar barra de scroll pero mantener funcionalidad */
+.scrollbar-hidden::-webkit-scrollbar {
+  display: none !important;
+}
+.scrollbar-hidden {
+  -ms-overflow-style: none !important;  /* IE and Edge */
+  scrollbar-width: none !important;  /* Firefox */
+}

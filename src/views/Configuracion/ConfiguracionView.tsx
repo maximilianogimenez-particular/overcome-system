@@ -260,7 +260,7 @@ export const ConfiguracionView: React.FC = () => {
         </div>
 
         {/* Sub-menú de Tabs */}
-        <div style={{ display: 'flex', gap: '4px', background: 'var(--bg-card-dark)', padding: '4px', borderRadius: '8px', border: '1px solid var(--border-dark)' }}>
+        <div style={{ display: 'flex', gap: '4px', background: 'var(--bg-card-dark)', padding: '4px', borderRadius: '8px', border: '1px solid var(--border-dark)', overflowX: 'auto', maxWidth: '100%', WebkitOverflowScrolling: 'touch' }} className="scrollbar-hidden">
           <button
             onClick={() => { setActiveSubTab('clientes'); setSearchTerm(''); }}
             className="btn-secondary"
@@ -271,6 +271,7 @@ export const ConfiguracionView: React.FC = () => {
               backgroundColor: activeSubTab === 'clientes' ? 'var(--primary-orange)' : 'transparent',
               color: activeSubTab === 'clientes' ? 'white' : 'var(--text-light-secondary)',
               fontSize: '0.85rem',
+              flexShrink: 0,
             }}
           >
             Multi-Clientes
@@ -285,6 +286,7 @@ export const ConfiguracionView: React.FC = () => {
               backgroundColor: activeSubTab === 'usuarios' ? 'var(--primary-orange)' : 'transparent',
               color: activeSubTab === 'usuarios' ? 'white' : 'var(--text-light-secondary)',
               fontSize: '0.85rem',
+              flexShrink: 0,
             }}
           >
             Multi-Usuarios
@@ -299,6 +301,7 @@ export const ConfiguracionView: React.FC = () => {
               backgroundColor: activeSubTab === 'respaldos' ? 'var(--primary-orange)' : 'transparent',
               color: activeSubTab === 'respaldos' ? 'white' : 'var(--text-light-secondary)',
               fontSize: '0.85rem',
+              flexShrink: 0,
             }}
           >
             Respaldos BD
