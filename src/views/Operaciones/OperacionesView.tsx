@@ -43,7 +43,6 @@ export const OperacionesView: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'proyectos' | 'consultores'>('proyectos');
   const [collapsedColumns, setCollapsedColumns] = useState<{ [key in ProjectStatus]?: boolean }>({
     planning: true,
-    completed: true,
     paused: true,
   });
   const [newUser, setNewUser] = useState({
