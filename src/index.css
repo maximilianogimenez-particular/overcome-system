@@ -294,12 +294,12 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 th.sticky-col-1 {
-  z-index: 10 !important;
+  z-index: 15 !important;
   background-color: #2E2E33 !important;
 }
 
 th.sticky-col-2 {
-  z-index: 10 !important;
+  z-index: 15 !important;
   background-color: #2E2E33 !important;
 }
 
@@ -313,5 +313,27 @@ tr:hover .sticky-col-2 {
 
 tfoot tr .sticky-col-1,
 tfoot tr .sticky-col-2 {
+  z-index: 15 !important;
   background-color: var(--bg-panel-dark) !important;
+}
+
+/* Cabeceras de tabla fijas verticalmente (Sticky headers) */
+.table-container thead th {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 8 !important;
+  background-color: #2E2E33 !important;
+}
+
+/* Pie de tabla fijo verticalmente (Sticky footers) */
+.table-container tfoot tr {
+  position: sticky !important;
+  bottom: 0 !important;
+  z-index: 8 !important;
+  box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.25) !important;
+}
+
+.table-container tfoot tr td {
+  border-top: 1px solid var(--border-dark) !important;
+  border-bottom: none !important;
 }

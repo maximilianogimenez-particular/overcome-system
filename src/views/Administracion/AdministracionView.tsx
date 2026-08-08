@@ -1050,7 +1050,7 @@ export const AdministracionView: React.FC = () => {
           </div>
 
           {/* Tabla de Proyecciones */}
-          <div className="table-container" style={{ overflowX: 'auto' }}>
+          <div className="table-container" style={{ overflowX: 'auto', maxHeight: '580px', overflowY: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.73rem' }}>
               <thead>
                 <tr>
