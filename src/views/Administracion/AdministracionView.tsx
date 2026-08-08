@@ -1096,7 +1096,19 @@ export const AdministracionView: React.FC = () => {
                     );
                   }
 
-                  return currentYearProjections.map((proj) => {
+                  // Ordenar proyecciones alfabéticamente por cliente y secundariamente por proyecto
+                  const sortedProjections = [...currentYearProjections].sort((a, b) => {
+                    const nameA = companies.find(c => c.id === a.company_id)?.name || '';
+                    const nameB = companies.find(c => c.id === b.company_id)?.name || '';
+                    const clientComp = nameA.localeCompare(nameB);
+                    if (clientComp !== 0) return clientComp;
+
+                    const projNameA = projects.find((p: any) => p.id === a.project_id)?.name || '';
+                    const projNameB = projects.find((p: any) => p.id === b.project_id)?.name || '';
+                    return projNameA.localeCompare(projNameB);
+                  });
+
+                  return sortedProjections.map((proj) => {
                     const company = companies.find(c => c.id === proj.company_id);
                     const project = projects.find((p: any) => p.id === proj.project_id);
                     
