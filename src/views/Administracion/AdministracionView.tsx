@@ -1054,8 +1054,8 @@ export const AdministracionView: React.FC = () => {
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.73rem' }}>
               <thead>
                 <tr>
-                  <th style={{ minWidth: '200px' }}>Cliente</th>
-                  <th style={{ minWidth: '200px' }}>Proyecto</th>
+                  <th className="sticky-col-1" style={{ minWidth: '200px' }}>Cliente</th>
+                  <th className="sticky-col-2" style={{ minWidth: '200px' }}>Proyecto</th>
                   <th style={{ minWidth: '115px', textAlign: 'right' }}>Ene</th>
                   <th style={{ minWidth: '115px', textAlign: 'right' }}>Feb</th>
                   <th style={{ minWidth: '115px', textAlign: 'right' }}>Mar</th>
@@ -1120,8 +1120,8 @@ export const AdministracionView: React.FC = () => {
 
                     return (
                       <tr key={proj.id}>
-                        <td style={{ fontWeight: 600 }}>{company?.name || 'S/N'}</td>
-                        <td>{project?.name || 'S/N'}</td>
+                        <td className="sticky-col-1" style={{ fontWeight: 600 }}>{company?.name || 'S/N'}</td>
+                        <td className="sticky-col-2">{project?.name || 'S/N'}</td>
                         <td style={{ textAlign: 'right' }}>{formatCurrency(proj.jan || 0)}</td>
                         <td style={{ textAlign: 'right' }}>{formatCurrency(proj.feb || 0)}</td>
                         <td style={{ textAlign: 'right' }}>{formatCurrency(proj.mar || 0)}</td>
@@ -1202,7 +1202,8 @@ export const AdministracionView: React.FC = () => {
                     <>
                       {/* Fila 1: Sumatoria ($) */}
                       <tr style={{ borderTop: '2px solid var(--border-dark)', backgroundColor: 'var(--bg-panel-dark)' }}>
-                        <td colSpan={2} style={{ fontWeight: 700, padding: '10px 8px' }}>Total Proyectado ($)</td>
+                        <td className="sticky-col-1" style={{ fontWeight: 700, padding: '10px 8px' }}>Total Proyectado ($)</td>
+                        <td className="sticky-col-2"></td>
                         {monthlyTotals.map((tot, idx) => (
                           <td key={idx} style={{ textAlign: 'right', fontWeight: 700, color: 'var(--accent-green)' }}>
                             {formatCurrency(tot)}
@@ -1216,7 +1217,8 @@ export const AdministracionView: React.FC = () => {
                       
                       {/* Fila 2: Cantidad de Proyectos */}
                       <tr style={{ backgroundColor: 'var(--bg-panel-dark)' }}>
-                        <td colSpan={2} style={{ fontWeight: 700, padding: '10px 8px' }}>Cant. Proyectos</td>
+                        <td className="sticky-col-1" style={{ fontWeight: 700, padding: '10px 8px' }}>Cant. Proyectos</td>
+                        <td className="sticky-col-2"></td>
                         {monthlyProjectCounts.map((count, idx) => (
                           <td key={idx} style={{ textAlign: 'right', fontWeight: 600 }}>
                             {count}
@@ -1227,7 +1229,8 @@ export const AdministracionView: React.FC = () => {
 
                       {/* Fila 3: Ticket Promedio ($) */}
                       <tr style={{ backgroundColor: 'var(--bg-panel-dark)' }}>
-                        <td colSpan={2} style={{ fontWeight: 700, padding: '10px 8px' }}>Ticket Promedio ($)</td>
+                        <td className="sticky-col-1" style={{ fontWeight: 700, padding: '10px 8px' }}>Ticket Promedio ($)</td>
+                        <td className="sticky-col-2"></td>
                         {monthlyAverages.map((avg, idx) => (
                           <td key={idx} style={{ textAlign: 'right', fontWeight: 600, color: 'var(--primary-orange)' }}>
                             {formatCurrency(avg)}
