@@ -1056,20 +1056,20 @@ export const AdministracionView: React.FC = () => {
                 <tr>
                   <th className="sticky-col-1" style={{ minWidth: '200px' }}>Cliente</th>
                   <th className="sticky-col-2" style={{ minWidth: '200px' }}>Proyecto</th>
-                  <th style={{ minWidth: '115px', textAlign: 'right' }}>Ene</th>
-                  <th style={{ minWidth: '115px', textAlign: 'right' }}>Feb</th>
-                  <th style={{ minWidth: '115px', textAlign: 'right' }}>Mar</th>
-                  <th style={{ minWidth: '115px', textAlign: 'right' }}>Abr</th>
-                  <th style={{ minWidth: '115px', textAlign: 'right' }}>May</th>
-                  <th style={{ minWidth: '115px', textAlign: 'right' }}>Jun</th>
-                  <th style={{ minWidth: '115px', textAlign: 'right' }}>Jul</th>
-                  <th style={{ minWidth: '115px', textAlign: 'right' }}>Ago</th>
-                  <th style={{ minWidth: '115px', textAlign: 'right' }}>Sep</th>
-                  <th style={{ minWidth: '115px', textAlign: 'right' }}>Oct</th>
-                  <th style={{ minWidth: '115px', textAlign: 'right' }}>Nov</th>
-                  <th style={{ minWidth: '115px', textAlign: 'right' }}>Dic</th>
-                  <th style={{ minWidth: '130px', textAlign: 'right' }}>Total Fila</th>
-                  <th style={{ minWidth: '140px', textAlign: 'right' }}>Total Cliente</th>
+                  <th style={{ minWidth: '125px', textAlign: 'right' }}>Ene</th>
+                  <th style={{ minWidth: '125px', textAlign: 'right' }}>Feb</th>
+                  <th style={{ minWidth: '125px', textAlign: 'right' }}>Mar</th>
+                  <th style={{ minWidth: '125px', textAlign: 'right' }}>Abr</th>
+                  <th style={{ minWidth: '125px', textAlign: 'right' }}>May</th>
+                  <th style={{ minWidth: '125px', textAlign: 'right' }}>Jun</th>
+                  <th style={{ minWidth: '125px', textAlign: 'right' }}>Jul</th>
+                  <th style={{ minWidth: '125px', textAlign: 'right' }}>Ago</th>
+                  <th style={{ minWidth: '125px', textAlign: 'right' }}>Sep</th>
+                  <th style={{ minWidth: '125px', textAlign: 'right' }}>Oct</th>
+                  <th style={{ minWidth: '125px', textAlign: 'right' }}>Nov</th>
+                  <th style={{ minWidth: '125px', textAlign: 'right' }}>Dic</th>
+                  <th style={{ minWidth: '140px', textAlign: 'right' }}>Total Fila</th>
+                  <th style={{ minWidth: '150px', textAlign: 'right' }}>Total Cliente</th>
                   <th style={{ minWidth: '160px', textAlign: 'center' }}>Acciones</th>
                 </tr>
               </thead>
