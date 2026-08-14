@@ -81,7 +81,7 @@ export const AdministracionView: React.FC = () => {
     description: '',
     issue_date: new Date().toISOString().split('T')[0],
     due_date: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    status: 'sent' as const,
+    status: 'sent' as 'draft' | 'sent' | 'paid' | 'overdue' | 'cancelled',
     file_url: '',
   });
 
@@ -221,7 +221,7 @@ export const AdministracionView: React.FC = () => {
     }
 
     for (const inv of validInvoices) {
-      await createRecord('invoices', {
+      const newInv = await createRecord('invoices', {
         company_id: inv.company_id,
         invoice_number: inv.invoice_number,
         amount: inv.amount,
@@ -232,6 +232,19 @@ export const AdministracionView: React.FC = () => {
         status: inv.status,
         file_url: '#',
       });
+
+      if (inv.status === 'paid' && newInv?.id) {
+        await createRecord('collections', {
+          invoice_id: newInv.id,
+          amount_collected: inv.amount,
+          collection_date: inv.issue_date || new Date().toISOString().split('T')[0],
+          payment_method: 'transfer',
+          bank: null,
+          reference_number: null,
+          status: 'completed',
+          file_url: null,
+        });
+      }
     }
 
     alert(`Se importaron ${validInvoices.length} facturas con éxito.`);
@@ -427,7 +440,7 @@ export const AdministracionView: React.FC = () => {
     
     setIsSaving(true);
     try {
-      await createRecord('invoices', {
+      const newInv = await createRecord('invoices', {
         company_id: newInvoice.company_id,
         invoice_number: newInvoice.invoice_number,
         amount: parseFloat(newInvoice.amount),
@@ -438,6 +451,19 @@ export const AdministracionView: React.FC = () => {
         status: newInvoice.status,
         file_url: newInvoice.file_url || '#',
       });
+
+      if (newInvoice.status === 'paid' && newInv?.id) {
+        await createRecord('collections', {
+          invoice_id: newInv.id,
+          amount_collected: parseFloat(newInvoice.amount),
+          collection_date: newInvoice.issue_date || new Date().toISOString().split('T')[0],
+          payment_method: 'transfer',
+          bank: null,
+          reference_number: null,
+          status: 'completed',
+          file_url: newInvoice.file_url || null,
+        });
+      }
       setShowInvoiceModal(false);
       setNewInvoice({
         company_id: '',
@@ -465,6 +491,9 @@ export const AdministracionView: React.FC = () => {
     
     setIsSaving(true);
     try {
+      const oldInvoice = invoices.find(i => i.id === editingInvoice.id);
+      const becamePaid = editingInvoice.status === 'paid' && oldInvoice?.status !== 'paid';
+
       await updateRecord('invoices', editingInvoice.id, {
         company_id: editingInvoice.company_id,
         invoice_number: editingInvoice.invoice_number,
@@ -475,6 +504,22 @@ export const AdministracionView: React.FC = () => {
         status: editingInvoice.status,
         file_url: editingInvoice.file_url || null,
       });
+
+      if (becamePaid) {
+        const collectionExists = collections.some(c => c.invoice_id === editingInvoice.id);
+        if (!collectionExists) {
+          await createRecord('collections', {
+            invoice_id: editingInvoice.id,
+            amount_collected: parseFloat(editingInvoice.amount),
+            collection_date: new Date().toISOString().split('T')[0],
+            payment_method: 'transfer',
+            bank: null,
+            reference_number: null,
+            status: 'completed',
+            file_url: editingInvoice.file_url || null,
+          });
+        }
+      }
       setEditingInvoice(null);
     } catch (err: any) {
       console.error("Error updating invoice:", err);
