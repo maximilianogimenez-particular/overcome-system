@@ -6,6 +6,29 @@ import React, { useState, useRef } from 'react';
 import { useApp } from '../../context/AppContext';
 import { SearchFilter } from '../../components/SearchFilter';
 
+export interface AttachedFile {
+  name: string;
+  url: string;
+}
+
+export const parseAttachments = (fileUrl: string | null | undefined): AttachedFile[] => {
+  if (!fileUrl || fileUrl === '#' || fileUrl.trim() === '') return [];
+  try {
+    const parsed = JSON.parse(fileUrl);
+    if (Array.isArray(parsed)) {
+      return parsed.map((item, idx) => {
+        if (typeof item === 'string') {
+          return { name: `Comprobante ${idx + 1}`, url: item };
+        }
+        return { name: item.name || `Comprobante ${idx + 1}`, url: item.url || '' };
+      }).filter(f => f.url && f.url !== '#');
+    }
+  } catch {
+    // Non-JSON string, treat as single attachment URL or base64
+  }
+  return [{ name: 'Comprobante', url: fileUrl }];
+};
+
 export const AdministracionView: React.FC = () => {
   const {
     companies,
@@ -132,6 +155,11 @@ export const AdministracionView: React.FC = () => {
   const [purchaseItems, setPurchaseItems] = useState<Array<{ description: string; quantity: number; unitPrice: number }>>([
     { description: '', quantity: 1, unitPrice: 0 }
   ]);
+
+  // Archivos adjuntos múltiples para Compras
+  const [purchaseFiles, setPurchaseFiles] = useState<AttachedFile[]>([]);
+  // Modal visor para cuando una compra tiene múltiples comprobantes
+  const [attachmentModalData, setAttachmentModalData] = useState<{ title: string; files: AttachedFile[] } | null>(null);
 
   // --- CARGADOR MASIVO DE HISTORIAL DE FACTURACIÓN ---
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -603,6 +631,16 @@ export const AdministracionView: React.FC = () => {
   const openAttachment = (dataUrl: string | null | undefined) => {
     if (!dataUrl) return;
     try {
+      if (typeof dataUrl === 'string' && (dataUrl.trim().startsWith('[') || dataUrl.trim().startsWith('{'))) {
+        const parsed = parseAttachments(dataUrl);
+        if (parsed.length === 1) {
+          openAttachment(parsed[0].url);
+          return;
+        } else if (parsed.length > 1) {
+          setAttachmentModalData({ title: 'Comprobantes Adjuntos', files: parsed });
+          return;
+        }
+      }
       const arr = dataUrl.split(',');
       if (arr.length < 2) {
         window.open(dataUrl, '_blank');
@@ -777,7 +815,7 @@ export const AdministracionView: React.FC = () => {
       status: purchaseForm.status,
       approved: purchaseForm.approved,
       invoiceNumber: purchaseForm.invoiceNumber,
-      file_url: purchaseForm.file_url || null,
+      file_url: purchaseFiles.length > 0 ? JSON.stringify(purchaseFiles) : null,
     };
 
     try {
@@ -789,6 +827,7 @@ export const AdministracionView: React.FC = () => {
       }
 
       setShowPurchaseModal(false);
+      setPurchaseFiles([]);
       setPurchaseForm({
         date: new Date().toISOString().split('T')[0],
         vendor_id: '',
@@ -1653,6 +1692,7 @@ export const AdministracionView: React.FC = () => {
                       return;
                     }
                     setEditingPurchase(null);
+                    setPurchaseFiles([]);
                     setPurchaseForm({
                       date: new Date().toISOString().split('T')[0],
                       vendor_id: vendors[0]?.id || '',
@@ -1754,16 +1794,29 @@ export const AdministracionView: React.FC = () => {
                               >
                                 Ver
                               </button>
-                              {p.file_url && (
-                                <button
-                                  className="btn-secondary"
-                                  style={{ padding: '4px 8px', fontSize: '0.75rem', borderColor: 'var(--accent-green)', color: 'var(--accent-green)' }}
-                                  onClick={() => openAttachment(p.file_url)}
-                                  title="Ver Comprobante Adjunto"
-                                >
-                                  📄 Adjunto
-                                </button>
-                              )}
+                              {(() => {
+                                const files = parseAttachments(p.file_url);
+                                if (files.length === 0) return null;
+                                return (
+                                  <button
+                                    className="btn-secondary"
+                                    style={{ padding: '4px 8px', fontSize: '0.75rem', borderColor: 'var(--accent-green)', color: 'var(--accent-green)' }}
+                                    onClick={() => {
+                                      if (files.length === 1) {
+                                        openAttachment(files[0].url);
+                                      } else {
+                                        setAttachmentModalData({
+                                          title: `Comprobantes - ${p.provider_name}`,
+                                          files,
+                                        });
+                                      }
+                                    }}
+                                    title={files.length === 1 ? 'Ver comprobante adjunto' : `Ver ${files.length} comprobantes adjuntos`}
+                                  >
+                                    📄 {files.length > 1 ? `Adjuntos (${files.length})` : 'Adjunto'}
+                                  </button>
+                                );
+                              })()}
                               {(activeRole === 'superadmin' || activeRole === 'administracion') && (
                                 <>
                                   <button
@@ -1771,6 +1824,7 @@ export const AdministracionView: React.FC = () => {
                                     style={{ padding: '4px 8px', fontSize: '0.75rem' }}
                                     onClick={() => {
                                       setEditingPurchase(p);
+                                      setPurchaseFiles(parseAttachments(p.file_url));
                                       setPurchaseForm({
                                         date: p.purchase_date,
                                         vendor_id: p.vendor_id || '',
@@ -2876,33 +2930,94 @@ export const AdministracionView: React.FC = () => {
                 </div>
 
                 <div className="form-group" style={{ marginTop: '12px' }}>
-                  <label>Comprobante / Documento Compra (PDF, JPG)</label>
+                  <label>Comprobantes / Documentos de Compra (PDF, JPG, PNG)</label>
                   <input
                     type="file"
-                    accept=".pdf,.jpg,.jpeg"
+                    multiple
+                    accept=".pdf,.jpg,.jpeg,.png"
                     onChange={async (e) => {
-                      const file = e.target.files?.[0];
-                      if (file) {
-                        try {
+                      const selectedFiles = e.target.files;
+                      if (!selectedFiles || selectedFiles.length === 0) return;
+                      try {
+                        const newFiles: AttachedFile[] = [];
+                        for (let i = 0; i < selectedFiles.length; i++) {
+                          const file = selectedFiles[i];
                           const base64 = await handleFileToBase64(file);
-                          setPurchaseForm({ ...purchaseForm, file_url: base64 });
-                        } catch (err) {
-                          console.error("Error reading file:", err);
+                          newFiles.push({
+                            name: file.name,
+                            url: base64,
+                          });
                         }
+                        setPurchaseFiles((prev) => [...prev, ...newFiles]);
+                      } catch (err) {
+                        console.error("Error al procesar archivos:", err);
+                      } finally {
+                        e.target.value = '';
                       }
                     }}
                   />
-                  {purchaseForm.file_url && (
-                    <div style={{ marginTop: '6px', fontSize: '0.85rem', color: 'var(--accent-green)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span>✅ Archivo cargado con éxito</span>
-                      <button 
-                        type="button" 
-                        className="btn-secondary" 
-                        style={{ padding: '2px 6px', fontSize: '0.7rem', borderColor: 'var(--accent-red)', color: 'var(--accent-red)' }}
-                        onClick={() => setPurchaseForm({ ...purchaseForm, file_url: '' })}
-                      >
-                        Eliminar
-                      </button>
+                  <small style={{ color: 'var(--text-light-muted)', fontSize: '0.75rem', display: 'block', marginTop: '4px' }}>
+                    Puede seleccionar o añadir varios archivos a la vez (.pdf, .jpg, .png).
+                  </small>
+                  {purchaseFiles.length > 0 && (
+                    <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--accent-green)' }}>
+                          ✅ {purchaseFiles.length} {purchaseFiles.length === 1 ? 'archivo adjuntado' : 'archivos adjuntados'}
+                        </span>
+                        {purchaseFiles.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => setPurchaseFiles([])}
+                            style={{ background: 'none', border: 'none', color: 'var(--accent-red)', fontSize: '0.75rem', cursor: 'pointer', textDecoration: 'underline' }}
+                          >
+                            Eliminar todos
+                          </button>
+                        )}
+                      </div>
+                      <div style={{ maxHeight: '160px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '6px' }} className="scrollbar-hidden">
+                        {purchaseFiles.map((file, idx) => (
+                          <div
+                            key={idx}
+                            style={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                              padding: '6px 10px',
+                              background: 'rgba(255,255,255,0.03)',
+                              border: '1px solid var(--border-dark)',
+                              borderRadius: '6px',
+                              fontSize: '0.82rem',
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden', marginRight: '8px' }}>
+                              <span>{file.name?.toLowerCase().endsWith('.pdf') ? '📕' : '🖼️'}</span>
+                              <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }} title={file.name}>
+                                {file.name || `Comprobante ${idx + 1}`}
+                              </span>
+                            </div>
+                            <div style={{ display: 'flex', gap: '6px', flexShrink: 0 }}>
+                              <button
+                                type="button"
+                                className="btn-secondary"
+                                style={{ padding: '2px 8px', fontSize: '0.72rem' }}
+                                onClick={() => openAttachment(file.url)}
+                                title="Previsualizar archivo"
+                              >
+                                👁️ Ver
+                              </button>
+                              <button
+                                type="button"
+                                style={{ background: 'none', border: 'none', color: 'var(--accent-red)', cursor: 'pointer', fontSize: '0.9rem', padding: '0 4px' }}
+                                onClick={() => setPurchaseFiles((prev) => prev.filter((_, i) => i !== idx))}
+                                title="Quitar archivo"
+                              >
+                                🗑️
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -2999,6 +3114,42 @@ export const AdministracionView: React.FC = () => {
               <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '16px', fontWeight: 700, fontSize: '1rem', color: 'var(--primary-orange)' }}>
                 Total: &nbsp;{formatCurrency(showViewPurchaseModal.amount)}
               </div>
+
+              {(() => {
+                const files = parseAttachments(showViewPurchaseModal.file_url);
+                if (files.length === 0) return null;
+                return (
+                  <div style={{ marginTop: '16px', paddingTop: '14px', borderTop: '1px solid var(--border-dark)' }}>
+                    <div style={{ fontWeight: 600, fontSize: '0.85rem', marginBottom: '8px', color: 'var(--text-light-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span>📎 Comprobantes Adjuntos ({files.length})</span>
+                    </div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                      {files.map((file, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          className="btn-secondary"
+                          style={{
+                            padding: '6px 12px',
+                            fontSize: '0.8rem',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            borderColor: 'var(--accent-green)',
+                            color: 'var(--accent-green)',
+                          }}
+                          onClick={() => openAttachment(file.url)}
+                          title="Abrir archivo en nueva pestaña"
+                        >
+                          <span>{file.name?.toLowerCase().endsWith('.pdf') ? '📕' : '🖼️'}</span>
+                          <span>{file.name || `Comprobante ${idx + 1}`}</span>
+                          <span style={{ fontSize: '0.75rem', opacity: 0.8 }}>↗</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
             <div className="modal-footer">
               <button type="button" className="btn-primary" onClick={() => setShowViewPurchaseModal(null)}>Cerrar</button>
@@ -3520,6 +3671,61 @@ export const AdministracionView: React.FC = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Visor de Múltiples Adjuntos */}
+      {attachmentModalData && (
+        <div className="modal-overlay" style={{ zIndex: 1100 }}>
+          <div className="modal-content animate-fade-in" style={{ maxWidth: '480px' }}>
+            <div className="modal-header">
+              <h3 style={{ fontSize: '1.05rem', fontWeight: 600 }}>{attachmentModalData.title}</h3>
+              <button className="modal-close" onClick={() => setAttachmentModalData(null)}>×</button>
+            </div>
+            <div className="modal-body" style={{ padding: '16px' }}>
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-light-secondary)', marginBottom: '12px' }}>
+                Seleccione el archivo que desea visualizar ({attachmentModalData.files.length} disponibles):
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '300px', overflowY: 'auto' }}>
+                {attachmentModalData.files.map((file, idx) => (
+                  <div
+                    key={idx}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      padding: '10px 12px',
+                      background: 'var(--bg-panel-dark)',
+                      border: '1px solid var(--border-dark)',
+                      borderRadius: '6px'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden', marginRight: '8px' }}>
+                      <span style={{ fontSize: '1.2rem' }}>
+                        {file.name?.toLowerCase().endsWith('.pdf') ? '📕' : '🖼️'}
+                      </span>
+                      <span style={{ fontSize: '0.85rem', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={file.name}>
+                        {file.name || `Comprobante ${idx + 1}`}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      className="btn-primary"
+                      style={{ padding: '4px 10px', fontSize: '0.75rem', flexShrink: 0 }}
+                      onClick={() => openAttachment(file.url)}
+                    >
+                      Abrir ↗
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button type="button" className="btn-secondary" onClick={() => setAttachmentModalData(null)}>
+                Cerrar
+              </button>
+            </div>
           </div>
         </div>
       )}
